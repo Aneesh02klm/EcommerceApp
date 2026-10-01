@@ -15,5 +15,6 @@ namespace Malieakal.Application.Abstractions
         Task UpdateAsync(Product product);
         Task UpdateStockAsync(Guid productId, int quantityDelta);
         Task<IEnumerable<Product>> SearchAsync(ProductSearchQuery query);
+        Task<ProductFacets> GetProductFacetsAsync(ProductSearchQuery query);
     }
 }

@@ -165,65 +165,59 @@ export function ProductDetailClient({ product, category, brand, specifications, 
           
           {/* LEFT COLUMN: Gallery */}
           <div className="w-full min-w-0 lg:sticky lg:top-28">
-            <ProductGallery images={images} />
+            <ProductGallery images={images} productId={product.id} />
           </div>
 
           {/* RIGHT COLUMN: Details & Actions */}
           <div className="w-full flex flex-col min-w-0">
             
             {/* 1. Header: Brand, Title, Reviews, Stock */}
-            <div className="mb-4">
-              {brand && (
-                <Link href={`/products?brand=${brand.slug}`}>
-                  <span className="text-xs font-black text-amber-500 uppercase tracking-[0.2em] block mb-3 hover:text-[#0B192C] transition-colors">
-                    {brand.name}
-                  </span>
-                </Link>
-              )}
-              <h1 className="text-3xl lg:text-4xl font-black text-[#0B192C] leading-[1.15] mb-3 tracking-tight">
+            <div className="mb-6 border-b border-gray-100 pb-6">
+              <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-widest mb-2 block">
+                {brand ? `${brand.name} DIRECT AUTHORIZED` : 'DIRECT AUTHORIZED'}
+              </span>
+              <h1 className="text-3xl lg:text-[40px] font-serif font-black text-[#0B192C] leading-[1.15] mb-4">
                 {product.name}
               </h1>
               
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-0.5 bg-gray-50 px-2 py-1 rounded">
-                    {[1, 2, 3, 4, 5].map(s => (
-                      <Star key={s} size={14} className={s <= 4 ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"} />
-                    ))}
-                  </div>
-                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider underline decoration-gray-300 decoration-dotted underline-offset-4 cursor-pointer hover:text-amber-500">
-                    124 Reviews
-                  </span>
+              <div className="text-[15px] font-medium text-gray-600 mb-5">
+                Model: <span className="text-[#0B192C] font-bold">{product.sku || 'FHM1209ZDL'}</span> <span className="mx-2 text-gray-300">|</span> AI Direct Drive Technology
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Star key={s} size={15} className={s <= 4 ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"} />
+                  ))}
                 </div>
-                <span className="text-gray-300 hidden sm:block">|</span>
-                <span className={`text-[11px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full ${activeStock > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                  {activeStock > 0 ? 'In Stock' : 'Out of Stock'}
+                <span className="text-[13px] font-medium text-gray-500">
+                  4.5 <span className="mx-1 text-gray-300">|</span> 238 Verified Reviews
+                </span>
+                <span className="mx-2 text-gray-300">|</span>
+                <span className={`text-[11px] font-black tracking-widest uppercase ${activeStock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                  {activeStock > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
                 </span>
               </div>
-            </div>
-
-            {/* 2. Price Block */}
-            <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100 mb-5">
-              <div className="flex items-baseline gap-4 mb-1.5 flex-wrap">
-                <span className="text-3xl font-black text-[#0B192C] tracking-tight">{formatCurrency(activePrice)}</span>
+            </div>            {/* 2. Price Block */}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-3 mb-1">
+                <span className="text-[40px] font-black text-[#0B192C] tracking-tight">{formatCurrency(activePrice)}</span>
                 {product.discount > 0 && (
                   <>
-                    <span className="text-base text-gray-400 line-through font-semibold decoration-gray-300 decoration-2">{formatCurrency(activeMrp)}</span>
-                    <span className="bg-green-100 text-green-700 text-xs font-black px-2.5 py-1 rounded-md uppercase tracking-wider ml-1">
+                    <span className="text-lg text-gray-400 line-through font-medium">MRP {formatCurrency(activeMrp)}</span>
+                    <span className="bg-[#128842] text-white text-[13px] font-bold px-2 py-0.5 rounded uppercase tracking-wide self-center -translate-y-[2px]">
                       {product.discount}% OFF
                     </span>
                   </>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-4 mt-3">
-                {discountAmount > 0 && (
-                  <span className="text-amber-600 text-xs font-black uppercase tracking-wider">
-                    You Save: {formatCurrency(discountAmount)}
-                  </span>
-                )}
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                  Inclusive of all taxes
-                </span>
+              {discountAmount > 0 && (
+                <div className="text-green-600 font-bold text-[15px] mb-1.5 tracking-tight">
+                  You Save: {formatCurrency(discountAmount)}
+                </div>
+              )}
+              <div className="text-[13px] font-medium text-gray-400">
+                Inclusive of all local taxes & State duties
               </div>
             </div>
 

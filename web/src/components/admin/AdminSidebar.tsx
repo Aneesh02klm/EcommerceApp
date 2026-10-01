@@ -9,6 +9,7 @@ const menuItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Products', href: '/admin/products', icon: ShoppingBag },
   { name: 'Categories', href: '/admin/categories', icon: FolderTree },
+  { name: 'Banners', href: '/admin/banners', icon: Tags },
   { name: 'Brands', href: '/admin/brands', icon: Tags },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
   { name: 'Logistics', href: '/admin/logistics', icon: Tags }, // Using Tags icon, can change later

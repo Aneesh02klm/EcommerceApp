@@ -9,6 +9,7 @@ import { CartNavBadge } from '@/components/ui/CartNavBadge';
 import { AppInitializer } from '@/components/ui/AppInitializer';
 import { ToastContainer } from '@/components/ui/Toast';
 import { CompareBar } from '@/components/ui/CompareBar';
+import { WishlistNavBadge } from '@/components/ui/WishlistNavBadge';
 import { ShoppingBag, User, MapPin, Clock, Phone, Heart, ChevronDown } from 'lucide-react';
 import './globals.css';
 
@@ -93,10 +94,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <span className="text-[9px] font-bold uppercase tracking-wider">Stores</span>
               </Link>
 
-              <Link href="/wishlist" className="flex flex-col items-center gap-0.5 text-[#0B192C] hover:text-amber-500 transition-colors">
-                <Heart size={21} />
-                <span className="text-[9px] font-bold uppercase tracking-wider">Wishlist</span>
-              </Link>
+              <WishlistNavBadge />
 
               <CartNavBadge />
 

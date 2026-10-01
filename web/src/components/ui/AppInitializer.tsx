@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useCartStore } from '@/store/cartStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 
 export function AppInitializer() {
   const initDone = useRef(false);
@@ -15,6 +16,7 @@ export function AppInitializer() {
     if (token && !initDone.current) {
       initDone.current = true;
       initFromBackend();
+      useWishlistStore.getState().fetchWishlist(token);
     } else if (!token) {
       // If user logs out, we want to allow initFromBackend to run again on next login
       initDone.current = false;
@@ -36,6 +38,7 @@ export function AppInitializer() {
       useCartStore.persist.rehydrate();
       if (useAuthStore.getState().token) {
         useCartStore.getState().initFromBackend();
+        useWishlistStore.getState().fetchWishlist(useAuthStore.getState().token);
       }
     };
     window.addEventListener('focus', handleFocus);

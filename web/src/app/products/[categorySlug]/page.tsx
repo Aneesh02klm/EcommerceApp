@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { FilterSidebar } from '@/components/ui/FilterSidebar';
+import { SortDropdown } from '@/components/ui/SortDropdown';
 import { SlidersHorizontal, ChevronRight, ArrowUpDown } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
@@ -45,14 +46,16 @@ export default async function CategoryProductsPage({ params, searchParams }: { p
   if (q) qs.append('Keyword', q);
   if (sort) qs.append('SortBy', sort);
   if (inStockOnly === 'true') qs.append('InStockOnly', 'true');
-  
-  Object.keys(sp).forEach(k => {
+    if (sp.minPrice) qs.append('MinPrice', sp.minPrice);
+    if (sp.maxPrice) qs.append('MaxPrice', sp.maxPrice);
+    Object.keys(sp).forEach(k => {
     if (k.startsWith('SpecFilters[')) {
       qs.append(k, sp[k]);
     }
   });
 
   const productsRaw = await get(`/api/v1/products${qs.toString() ? `?${qs}` : ''}`);
+  const facetsRaw = await get(`/api/v1/products/facets${qs.toString() ? `?${qs}` : ''}`);
 
   const mapProduct = (p: any) => ({
     ...p,
@@ -100,38 +103,61 @@ export default async function CategoryProductsPage({ params, searchParams }: { p
       <div className="container mx-auto px-6 py-8 flex gap-7">
 
         {/* ─── SIDEBAR ─────────────────────────────────────── */}
-        <FilterSidebar categories={categories} brands={brands} activeCategoryId={activeCategory?.id} currentCategorySlug={categorySlug} />
+        <FilterSidebar categories={categories} brands={brands} activeCategoryId={activeCategory?.id} currentCategorySlug={categorySlug} facets={facetsRaw} />
 
         {/* ─── MAIN CONTENT ────────────────────────────────── */}
         <div className="flex-1 min-w-0">
-          {/* Toolbar */}
-          <div className="bg-white rounded-lg border border-gray-200 px-5 py-3 flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <SlidersHorizontal size={15} className="text-gray-400" />
-              <span className="text-xs font-bold text-[#0B192C]">
-                {filteredProducts.length} Products
-                {activeCategory ? ` in ${activeCategory.name}` : ''}
-                {activeBrand ? ` by ${activeBrand.name}` : ''}
-                {q ? ` for "${q}"` : ''}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ArrowUpDown size={13} className="text-gray-400" />
-              <span className="text-[10px] text-gray-500 font-semibold">Sort:</span>
-              <div className="flex gap-1">
-                {SORTS.map(s => (
-                  <Link
-                    key={s.value}
-                    href={`/products/${categorySlug}?${new URLSearchParams({ ...sp, sort: s.value }).toString()}`}
-                    className={`text-[10px] px-2.5 py-1.5 rounded font-bold uppercase tracking-wide transition-colors ${sort === s.value ? 'bg-amber-400 text-[#0B192C]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                  >
-                    {s.label}
-                  </Link>
-                ))}
+                              
+          {/* Dynamic Banner Section */}
+          {(() => {
+            let title = "Premium Electronics";
+            let desc = "Discover our latest range of high-end appliances and gadgets.";
+            let img = "https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=2000";
+            let badge = "New Collection";
+            
+            if (categorySlug === 'mobiles' || categorySlug === 'smartphones') {
+              title = "Next-Gen Smartphones";
+              desc = "Up to 30% off on flagship models and accessories.";
+              img = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=2000";
+              badge = "Tech Week";
+            } else if (categorySlug === 'washing-machines' || categorySlug === 'home-appliances') {
+              title = "Premium Care for Your Rainwear";
+              desc = "Get up to ₹15,000 Off on high-performance Steam Wash washers with complimentary Malieakal Care Plus warranty.";
+              img = "https://images.unsplash.com/photo-1626806819282-2c1dc0ed1152?q=80&w=2070";
+              badge = "Monsoon Special";
+            }
+            
+            return (
+              <div className="w-full h-48 md:h-56 bg-[#0a1020] rounded-xl overflow-hidden mb-8 flex items-center justify-between pl-10">
+                 <div className="relative z-10 max-w-lg py-6">
+                   <span className="bg-[#fbc02d] text-[#0B192C] text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded shadow-sm mb-4 inline-block">{badge}</span>
+                   <h2 className="text-3xl font-serif text-white mb-2 leading-tight">{title}</h2>
+                   <p className="text-sm text-gray-400 font-medium leading-relaxed">{desc}</p>
+                 </div>
+                 <div className="h-full w-2/5 min-w-[250px] relative hidden md:block">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0a1020] via-transparent to-transparent z-10"></div>
+                    <img src={img} alt="Promo" className="w-full h-full object-cover object-center" />
+                 </div>
               </div>
+            );
+          })()}
+          
+          {/* Category Header & Toolbar */}
+          <div className="flex items-end justify-between mb-6 pb-4 border-b border-gray-100">
+            <div>
+              <h1 className="text-3xl font-serif font-black text-[#0B192C] mb-2">{activeCategory ? activeCategory.name : 'Products'}</h1>
+              <p className="text-sm text-gray-500 font-medium">Showing {filteredProducts.length} of 156 premium products in Kollam catalog</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-2 bg-white cursor-pointer hover:border-gray-300">
+                <span className="text-xs text-gray-500 font-medium">Sort By:</span>
+                <SortDropdown currentSort={sort} />
+              </div>
+              <button className="p-2 border border-gray-200 rounded-md bg-white hover:bg-gray-50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+              </button>
             </div>
           </div>
-
           {/* Products Grid */}
           {filteredProducts.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-200 py-24 flex flex-col items-center text-center">
@@ -145,7 +171,7 @@ export default async function CategoryProductsPage({ params, searchParams }: { p
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
               {filteredProducts.map((p: any) => (
                 <ProductCard key={p.id} {...p} />
               ))}

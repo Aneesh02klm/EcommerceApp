@@ -248,5 +248,64 @@ namespace Malieakal.Infrastructure.Repositories
 
             return products;
         }
+
+        public async Task<Malieakal.Application.Models.ProductFacets> GetProductFacetsAsync(Malieakal.Application.Models.ProductSearchQuery query)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            var facets = new Malieakal.Application.Models.ProductFacets();
+
+            // We use Dapper QueryMultipleAsync or just individual queries
+            var param = new DynamicParameters();
+            var sqlCondition = new System.Text.StringBuilder("WHERE p.IsActive = TRUE ");
+
+            if (!string.IsNullOrWhiteSpace(query.Keyword))
+            {
+                sqlCondition.Append(" AND (p.Name ILIKE @Keyword OR p.Description ILIKE @Keyword OR p.SKU ILIKE @Keyword) ");
+                param.Add("Keyword", $"%{query.Keyword}%");
+            }
+            if (query.CategoryId.HasValue)
+            {
+                sqlCondition.Append(" AND p.CategoryId = @CategoryId ");
+                param.Add("CategoryId", query.CategoryId.Value);
+            }
+            
+            // Price range
+            var priceSql = $"SELECT COALESCE(MIN(p.FinalPrice), 0) as Min, COALESCE(MAX(p.FinalPrice), 0) as Max FROM Products p {sqlCondition}";
+            var priceRange = await connection.QuerySingleOrDefaultAsync<Malieakal.Application.Models.PriceRangeFacet>(priceSql, param);
+            if (priceRange != null) facets.PriceRange = priceRange;
+
+            // Brands
+            var brandsSql = $@"
+                SELECT b.Id, b.Name, COUNT(p.Id) as Count
+                FROM Brands b
+                JOIN Products p ON b.Id = p.BrandId
+                {sqlCondition}
+                GROUP BY b.Id, b.Name
+                ORDER BY b.Name";
+            facets.Brands = (await connection.QueryAsync<Malieakal.Application.Models.BrandFacet>(brandsSql, param)).ToList();
+
+            // Specs - fallback to simple JSON aggregation or Specification table.
+            // Using ProductSpecifications table:
+            var specsSql = $@"
+                SELECT sd.Id as SpecId, sd.Name, ps.Value, COUNT(p.Id) as Count
+                FROM ProductSpecifications ps
+                JOIN SpecificationDefinitions sd ON ps.SpecificationDefinitionId = sd.Id
+                JOIN Products p ON ps.ProductId = p.Id
+                {sqlCondition}
+                GROUP BY sd.Id, sd.Name, ps.Value
+                ORDER BY sd.Name, ps.Value";
+            
+            var rawSpecs = await connection.QueryAsync(specsSql, param);
+            var groupedSpecs = rawSpecs.GroupBy(x => new { x.specid, x.name }).Select(g => new Malieakal.Application.Models.SpecFacet
+            {
+                SpecId = (int)g.Key.specid,
+                Name = (string)g.Key.name,
+                Values = g.Select(v => new Malieakal.Application.Models.SpecValueFacet { Value = (string)v.value, Count = (int)v.count }).ToList()
+            }).ToList();
+            
+            facets.Specs = groupedSpecs;
+
+            return facets;
+        }
     }
 }

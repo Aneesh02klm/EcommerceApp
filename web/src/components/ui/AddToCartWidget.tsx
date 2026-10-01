@@ -58,7 +58,7 @@ export function AddToCartWidget({
           
           {/* Quantity Selector */}
           {!compact && (
-            <div className="flex items-center border border-gray-200 rounded shrink-0 h-11 bg-white">
+            <div className="flex items-center border border-gray-200 rounded shrink-0 h-12 bg-white">
               <button 
                 type="button"
                 onClick={() => setQty(q => Math.max(1, q - 1))}
@@ -85,9 +85,9 @@ export function AddToCartWidget({
               type="button"
               onClick={handleAdd}
               disabled={adding || buying}
-              className={`flex-1 min-w-0 bg-white border-2 border-[#0B192C] text-[#0B192C] hover:bg-gray-50 disabled:opacity-50 font-extrabold uppercase tracking-widest text-xs rounded transition-all flex items-center justify-center gap-2 whitespace-nowrap h-11 px-2`}
+              className={`flex-1 min-w-0 bg-[#0B192C] border-2 border-[#0B192C] text-white hover:bg-[#162a45] disabled:opacity-50 font-extrabold uppercase tracking-widest text-xs rounded transition-all flex items-center justify-center gap-2 whitespace-nowrap h-12 px-2`}
             >
-              <ShoppingCart size={15} className="shrink-0" />
+              <ShoppingCart size={15} className="shrink-0 text-white" />
               <span className="truncate">{adding ? 'Adding...' : 'Add to Cart'}</span>
             </button>
 
@@ -97,9 +97,9 @@ export function AddToCartWidget({
                 type="button"
                 onClick={handleBuyNow}
                 disabled={adding || buying}
-                className={`flex-1 min-w-0 bg-[#0B192C] text-white hover:bg-[#162a45] shadow-md shadow-[#0B192C]/15 disabled:opacity-50 font-extrabold uppercase tracking-widest text-xs rounded transition-all flex items-center justify-center gap-2 whitespace-nowrap h-11 px-2`}
+                className={`flex-1 min-w-0 bg-amber-400 text-[#0B192C] hover:bg-amber-500 border-2 border-amber-400 shadow-md shadow-[#0B192C]/15 disabled:opacity-50 font-extrabold uppercase tracking-widest text-xs rounded transition-all flex items-center justify-center gap-2 whitespace-nowrap h-12 px-2`}
               >
-                <Zap size={15} className="shrink-0 text-amber-400" />
+                <Zap size={15} className="shrink-0 text-[#0B192C]" />
                 <span className="truncate">{buying ? 'Redirecting...' : 'Buy Now'}</span>
               </button>
             )}

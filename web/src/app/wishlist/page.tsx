@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { buildProductUrl } from '@/lib/buildProductUrl';
 import { Heart, Loader2, Trash2, ShoppingCart } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { useWishlistStore } from '@/store/wishlistStore';
+import { toast } from '@/components/ui/Toast';
 
 export default function WishlistPage() {
   const { token } = useAuthStore();

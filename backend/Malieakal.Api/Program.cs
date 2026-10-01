@@ -81,6 +81,7 @@ using (var scope = app.Services.CreateScope())
             "Database/05_Init_CMS.sql",
             "Database/06_Init_Account.sql",
             "Database/105_CheckoutUpgrade.sql",
+            "Database/106_Banners.sql",
             "Database/106_Logistics_Init.sql",
             "Database/106_PromoCodes.sql",
             "Database/107_OrderTracking.sql",

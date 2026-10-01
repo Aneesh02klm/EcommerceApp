@@ -25,6 +25,13 @@ namespace Malieakal.Api.Controllers
             return Ok(new { success = true, data = products });
         }
 
+        [HttpGet("facets")]
+        public async Task<IActionResult> GetFacets([FromQuery] Malieakal.Application.Models.ProductSearchQuery query)
+        {
+            var facets = await _productRepository.GetProductFacetsAsync(query);
+            return Ok(new { success = true, data = facets });
+        }
+
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
