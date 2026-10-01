@@ -13,6 +13,7 @@ namespace Malieakal.Application.Abstractions
         Task<Product?> GetBySlugAsync(string slug);
         Task CreateAsync(Product product);
         Task UpdateAsync(Product product);
+        Task UpdateStockAsync(Guid productId, int quantityDelta);
         Task<IEnumerable<Product>> SearchAsync(ProductSearchQuery query);
     }
 }

@@ -124,6 +124,24 @@ namespace Malieakal.Api.Controllers
             });
         }
 
+        
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (request.Otp != "123456")
+                throw new DomainException("Invalid OTP.", "INVALID_OTP");
+
+            var user = await _userRepository.GetByEmailAsync(request.EmailOrPhone);
+            if (user == null)
+                throw new DomainException("User not found.", "NOT_FOUND");
+
+            user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+            await _userRepository.UpdateUserAsync(user);
+
+            return Ok(new { success = true, message = "Password updated successfully." });
+        }
+
         [HttpPost("send-otp")]
         public IActionResult SendOtp([FromBody] SendOtpRequest request)
         {
@@ -194,6 +212,14 @@ namespace Malieakal.Api.Controllers
     public class SendOtpRequest
     {
         [Required] public string EmailOrPhone { get; set; } = string.Empty;
+    }
+
+    
+    public class ResetPasswordRequest
+    {
+        [System.ComponentModel.DataAnnotations.Required] public string EmailOrPhone { get; set; } = string.Empty;
+        [System.ComponentModel.DataAnnotations.Required] public string Otp { get; set; } = string.Empty;
+        [System.ComponentModel.DataAnnotations.Required] public string NewPassword { get; set; } = string.Empty;
     }
 
     public class VerifyOtpRequest

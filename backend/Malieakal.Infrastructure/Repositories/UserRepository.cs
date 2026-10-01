@@ -91,7 +91,7 @@ namespace Malieakal.Infrastructure.Repositories
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
                 UPDATE Users 
-                SET FirstName = @FirstName, LastName = @LastName, Phone = @Phone, UpdatedAt = @UpdatedAt
+                SET FirstName = @FirstName, LastName = @LastName, Phone = @Phone, PasswordHash = @PasswordHash, UpdatedAt = @UpdatedAt
                 WHERE Id = @Id";
             await connection.ExecuteAsync(sql, user);
         }

@@ -11,6 +11,8 @@ namespace Malieakal.Domain.Entities
         public int BrandId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
+        public string? CategorySlug { get; set; }
+        public string? BrandSlug { get; set; }
         public string? SKU { get; set; }
         public string? Model { get; set; }
         public decimal MRP { get; set; }

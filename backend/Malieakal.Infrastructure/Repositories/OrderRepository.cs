@@ -293,11 +293,12 @@ namespace Malieakal.Infrastructure.Repositories
             {
                 order.Items = (await connection.QueryAsync<OrderItem>(
                     @"SELECT i.Id, i.OrderId, i.ProductId, i.ProductName, i.Price, i.Quantity,
-                             pi.ImageUrl as ProductImage, p.Slug as ProductSlug,
+                             pi.ImageUrl as ProductImage, p.Slug as ProductSlug, c.Slug as CategorySlug,
                              '1 Year' as WarrantyPeriod, w.ExpiryDate as WarrantyExpiryDate,
                              w.Status as WarrantyStatus
                       FROM OrderItems i
                       LEFT JOIN Products p ON p.Id = i.ProductId
+                      LEFT JOIN Categories c ON c.Id = p.CategoryId
                       LEFT JOIN ProductImages pi ON pi.ProductId = p.Id AND pi.IsPrimary = TRUE
                       LEFT JOIN UserWarranties w ON w.ProductId = i.ProductId AND w.UserId = @UserId
                       WHERE i.OrderId = @OrderId",
@@ -329,12 +330,14 @@ namespace Malieakal.Infrastructure.Repositories
             var sql = @"
                 SELECT o.*, 
                        i.Id, i.OrderId, i.ProductId, i.ProductName, i.Price, i.Quantity,
-                       pi.ImageUrl as ProductImage, p.Slug as ProductSlug,
+                       pi.ImageUrl as ProductImage, p.Slug as ProductSlug, c.Slug as CategorySlug, br.Slug as BrandSlug,
                        '1 Year' as WarrantyPeriod, w.ExpiryDate as WarrantyExpiryDate,
                        w.Status as WarrantyStatus
                 FROM Orders o
                 LEFT JOIN OrderItems i ON o.Id = i.OrderId
                 LEFT JOIN Products p ON p.Id = i.ProductId
+                LEFT JOIN Categories c ON c.Id = p.CategoryId
+                LEFT JOIN Brands br ON br.Id = p.BrandId
                 LEFT JOIN ProductImages pi ON pi.ProductId = p.Id AND pi.IsPrimary = TRUE
                 LEFT JOIN UserWarranties w ON w.ProductId = i.ProductId AND w.UserId = o.UserId
                 WHERE o.UserId = @UserId

@@ -197,6 +197,17 @@ namespace Malieakal.Api.Controllers
             }
 
             // ── Build order (prices come from DB cart — never trust frontend) ──
+            
+            // â”€â”€ Validate Stock BEFORE Checkout (Race Condition Fix) â”€â”€
+            foreach (var item in cart.Items)
+            {
+                var p = await _productRepository.GetByIdAsync(item.ProductId);
+                if (p == null || p.Stock < item.Quantity)
+                {
+                    return BadRequest(new { success = false, message = $"Sorry, '{item.Product?.Name ?? "an item"}' is out of stock or does not have enough quantity available." });
+                }
+            }
+
             var order = new Order
             {
                 Id = Guid.NewGuid(),
@@ -241,7 +252,15 @@ namespace Malieakal.Api.Controllers
                 };
                 payment.OrderId = order.Id;
 
-                await _orderRepository.CreateOrderAsync(order, payment);
+                                await _orderRepository.CreateOrderAsync(order, payment);
+
+                // Deduct stock for COD
+                foreach (var item in cart.Items)
+                {
+                    await _productRepository.UpdateStockAsync(item.ProductId, -item.Quantity);
+                }
+
+                await _cartRepository.ClearCartAsync(cart.Id);
 
                 return Ok(new
                 {
@@ -301,6 +320,27 @@ namespace Malieakal.Api.Controllers
 
             await _orderRepository.UpdatePaymentStatusAsync(
                 request.OrderId, request.RazorpayPaymentId, request.RazorpaySignature, "Success");
+                
+            var order = await _orderRepository.GetOrderByIdAsync(request.OrderId);
+            if (order != null && order.Items != null)
+            {
+                foreach (var item in order.Items)
+                {
+                    await _productRepository.UpdateStockAsync(item.ProductId, -item.Quantity);
+                }
+                
+                // Clear cart (find cart by user id)
+                if (order.UserId.HasValue)
+                {
+                    var cart = await _cartRepository.GetCartByUserIdAsync(order.UserId.Value);
+                    if (cart != null)
+                    {
+                        await _cartRepository.ClearCartAsync(cart.Id);
+                    }
+                }
+                
+            }
+                
             return Ok(new { success = true, message = "Payment successful." });
         }
     }

@@ -48,6 +48,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 var app = builder.Build();
 
 // INITIALIZE DATABASE
@@ -72,19 +73,13 @@ using (var scope = app.Services.CreateScope())
     try {
         using var targetConn = new Npgsql.NpgsqlConnection(connStr);
         targetConn.Open();
-        var scriptPaths = new[] {
+        var schemaScripts = new[] {
             "Database/01_Init_Auth.sql",
             "Database/02_Init_Catalog.sql",
             "Database/03_Init_Commerce.sql",
             "Database/04_Init_Orders.sql",
             "Database/05_Init_CMS.sql",
             "Database/06_Init_Account.sql",
-            "Database/99_Figma_Seed.sql", // Our pixel-perfect data
-            "Database/100_DemoData.sql", // Extended catalog and demo customer
-            "Database/101_DynamicSpecs_Seed.sql", // Applies JSONB specs
-            "Database/102_DynamicVariants_Seed.sql",
-            "Database/103_MoreVariants_Seed.sql",
-            "Database/104_VariantImages_Seed.sql",
             "Database/105_CheckoutUpgrade.sql",
             "Database/106_Logistics_Init.sql",
             "Database/106_PromoCodes.sql",
@@ -92,12 +87,40 @@ using (var scope = app.Services.CreateScope())
             "Database/108_AddVariantIdToCartItems.sql"
         };
         
-        foreach(var file in scriptPaths) {
+        var seedScripts = new[] {
+            "Database/99_Figma_Seed.sql", // Our pixel-perfect data
+            "Database/100_DemoData.sql", // Extended catalog and demo customer
+            "Database/101_DynamicSpecs_Seed.sql", // Applies JSONB specs
+            "Database/102_DynamicVariants_Seed.sql",
+            "Database/103_MoreVariants_Seed.sql",
+            "Database/104_VariantImages_Seed.sql"
+        };
+        
+        // 1. Run schema and safe alterations
+        foreach(var file in schemaScripts) {
             var path = Path.Combine(Directory.GetCurrentDirectory(), file);
             if (File.Exists(path)) {
                 var sql = File.ReadAllText(path);
                 using var cmd = new Npgsql.NpgsqlCommand(sql, targetConn);
                 cmd.ExecuteNonQuery();
+            }
+        }
+
+        // 2. Safely seed dummy data ONLY if catalog is empty to prevent data loss
+        var checkSeedCmd = new Npgsql.NpgsqlCommand("SELECT COUNT(*) FROM Categories", targetConn);
+        long categoryCount = 1; // Default to non-empty
+        try {
+            categoryCount = (long)(checkSeedCmd.ExecuteScalar() ?? 1L);
+        } catch { } // If error, assume not empty to be safe
+
+        if (categoryCount == 0) {
+            foreach(var file in seedScripts) {
+                var path = Path.Combine(Directory.GetCurrentDirectory(), file);
+                if (File.Exists(path)) {
+                    var sql = File.ReadAllText(path);
+                    using var cmd = new Npgsql.NpgsqlCommand(sql, targetConn);
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
     } catch (Exception ex) {

@@ -25,9 +25,10 @@ namespace Malieakal.Infrastructure.Repositories
             if (cart != null)
             {
                 var itemsSql = @"
-                    SELECT ci.*, p.* 
+                    SELECT ci.*, p.*, c.Slug as CategorySlug
                     FROM CartItems ci
                     INNER JOIN Products p ON ci.ProductId = p.Id
+                    LEFT JOIN Categories c ON p.CategoryId = c.Id
                     WHERE ci.CartId = @CartId";
 
                 var items = await connection.QueryAsync<CartItem, Product, CartItem>(

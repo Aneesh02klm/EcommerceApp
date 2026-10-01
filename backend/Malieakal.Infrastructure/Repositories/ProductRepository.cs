@@ -20,14 +20,17 @@ namespace Malieakal.Infrastructure.Repositories
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
             using var connection = _connectionFactory.CreateConnection();
-            return await connection.QueryAsync<Product>("SELECT * FROM Products ORDER BY CreatedAt DESC");
+            return await connection.QueryAsync<Product>("SELECT * FROM Products ORDER BY p.CreatedAt DESC");
         }
 
         public async Task<Product?> GetByIdAsync(Guid id)
         {
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
-                SELECT * FROM Products WHERE Id = @Id;
+                SELECT p.*, c.Slug as CategorySlug, b.Slug as BrandSlug FROM Products p 
+                    LEFT JOIN Categories c ON p.CategoryId = c.Id
+                    LEFT JOIN Brands b ON p.BrandId = b.Id
+                    WHERE p.Id = @Id;
                 SELECT * FROM ProductImages WHERE ProductId = @Id ORDER BY DisplayOrder;
                 SELECT * FROM ProductSpecifications WHERE ProductId = @Id;
                 SELECT * FROM ProductVariants WHERE ProductId = @Id;
@@ -97,6 +100,13 @@ namespace Malieakal.Infrastructure.Repositories
             }
         }
 
+        
+        public async Task UpdateStockAsync(Guid productId, int quantityDelta)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.ExecuteAsync("UPDATE Products SET Stock = Stock + @Delta WHERE Id = @Id", new { Delta = quantityDelta, Id = productId });
+        }
+
         public async Task UpdateAsync(Product product)
         {
             using var connection = _connectionFactory.CreateConnection();
@@ -144,32 +154,41 @@ namespace Malieakal.Infrastructure.Repositories
         public async Task<IEnumerable<Product>> SearchAsync(Malieakal.Application.Models.ProductSearchQuery query)
         {
             using var connection = _connectionFactory.CreateConnection();
-            var sql = new System.Text.StringBuilder("SELECT * FROM Products WHERE IsActive = TRUE ");
+            var sql = new System.Text.StringBuilder(@"
+                SELECT p.*, c.Slug as CategorySlug, b.Slug as BrandSlug 
+                FROM Products p
+                LEFT JOIN Categories c ON p.CategoryId = c.Id
+                LEFT JOIN Brands b ON p.BrandId = b.Id
+                WHERE p.IsActive = TRUE ");
             var parameters = new DynamicParameters();
 
             if (!string.IsNullOrWhiteSpace(query.Keyword))
             {
-                sql.Append(" AND (Name ILIKE @Keyword OR Description ILIKE @Keyword OR SKU ILIKE @Keyword) ");
+                sql.Append(" AND (p.Name ILIKE @Keyword OR p.Description ILIKE @Keyword OR p.SKU ILIKE @Keyword) ");
                 parameters.Add("Keyword", $"%{query.Keyword}%");
             }
             if (query.CategoryId.HasValue)
             {
-                sql.Append(" AND CategoryId = @CategoryId ");
+                sql.Append(" AND p.CategoryId = @CategoryId ");
                 parameters.Add("CategoryId", query.CategoryId.Value);
             }
             if (query.BrandId.HasValue)
             {
-                sql.Append(" AND BrandId = @BrandId ");
+                sql.Append(" AND p.BrandId = @BrandId ");
                 parameters.Add("BrandId", query.BrandId.Value);
+            }
+            if (query.InStockOnly.HasValue && query.InStockOnly.Value)
+            {
+                sql.Append(" AND p.Stock > 0 ");
             }
             if (query.MinPrice.HasValue)
             {
-                sql.Append(" AND FinalPrice >= @MinPrice ");
+                sql.Append(" AND p.FinalPrice >= @MinPrice ");
                 parameters.Add("MinPrice", query.MinPrice.Value);
             }
             if (query.MaxPrice.HasValue)
             {
-                sql.Append(" AND FinalPrice <= @MaxPrice ");
+                sql.Append(" AND p.FinalPrice <= @MaxPrice ");
                 parameters.Add("MaxPrice", query.MaxPrice.Value);
             }
 
@@ -178,7 +197,7 @@ namespace Malieakal.Infrastructure.Repositories
                 int specIndex = 0;
                 foreach (var spec in query.SpecFilters)
                 {
-                    sql.Append($" AND EXISTS (SELECT 1 FROM ProductSpecifications ps{specIndex} WHERE ps{specIndex}.ProductId = Products.Id AND ps{specIndex}.SpecificationDefinitionId = @SpecDef{specIndex} AND ps{specIndex}.Value = @SpecVal{specIndex}) ");
+                    sql.Append($" AND EXISTS (SELECT 1 FROM ProductSpecifications ps{specIndex} WHERE ps{specIndex}.ProductId = p.Id AND ps{specIndex}.SpecificationDefinitionId = @SpecDef{specIndex} AND ps{specIndex}.Value = @SpecVal{specIndex}) ");
                     parameters.Add($"SpecDef{specIndex}", spec.Key);
                     parameters.Add($"SpecVal{specIndex}", spec.Value);
                     specIndex++;
@@ -187,11 +206,11 @@ namespace Malieakal.Infrastructure.Repositories
 
             sql.Append(query.SortBy switch
             {
-                "PriceLow" => " ORDER BY FinalPrice ASC ",
-                "PriceHigh" => " ORDER BY FinalPrice DESC ",
-                "Newest" => " ORDER BY CreatedAt DESC ",
-                "Popularity" => " ORDER BY (SELECT COALESCE(SUM(Quantity), 0) FROM OrderItems WHERE ProductId = Products.Id) DESC, FinalPrice ASC ",
-                _ => " ORDER BY CreatedAt DESC "
+                "PriceLow" => " ORDER BY p.FinalPrice ASC ",
+                "PriceHigh" => " ORDER BY p.FinalPrice DESC ",
+                "Newest" => " ORDER BY p.CreatedAt DESC ",
+                "Popularity" => " ORDER BY (SELECT COALESCE(SUM(Quantity), 0) FROM OrderItems WHERE ProductId = p.Id) DESC, FinalPrice ASC ",
+                _ => " ORDER BY p.CreatedAt DESC "
             });
 
             var pageSize = query.PageSize > 0 ? query.PageSize : 20;

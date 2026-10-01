@@ -23,6 +23,7 @@ namespace Malieakal.Application.Models
 
     public class AccountStatsDto
     {
+        public int TotalOrders { get; set; }
         public int ActiveWarranties { get; set; }
         public int UnusedCoupons { get; set; }
         public int OpenComplaints { get; set; }
@@ -30,6 +31,7 @@ namespace Malieakal.Application.Models
 
     public class RecentOrderDto
     {
+        public Guid Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public decimal TotalAmount { get; set; }

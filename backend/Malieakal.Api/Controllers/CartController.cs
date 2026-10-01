@@ -3,6 +3,7 @@ using Malieakal.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -49,7 +50,8 @@ namespace Malieakal.Api.Controllers
                 await _cartRepository.CreateCartAsync(cart);
             }
 
-            await _cartRepository.AddItemAsync(cart.Id, request.ProductId, request.Quantity, request.VariantId);
+            var productId = request.SkuId ?? request.ProductId;
+            await _cartRepository.AddItemAsync(cart.Id, productId, request.ResolvedQuantity, request.VariantId);
             
             // Re-fetch to get updated totals
             cart = await _cartRepository.GetCartByUserIdAsync(userId);
@@ -99,6 +101,7 @@ namespace Malieakal.Api.Controllers
             await _cartRepository.ClearCartAsync(cart.Id);
             return Ok(new { success = true, message = "Cart cleared." });
         }
+
         [HttpPost("sync")]
         public async Task<IActionResult> SyncCart([FromBody] SyncCartRequest request)
         {
@@ -117,7 +120,8 @@ namespace Malieakal.Api.Controllers
 
             foreach (var item in request.Items)
             {
-                await _cartRepository.AddItemAsync(cart.Id, item.ProductId, item.Quantity, item.VariantId);
+                var productId = item.SkuId ?? item.ProductId;
+                await _cartRepository.AddItemAsync(cart.Id, productId, item.ResolvedQuantity, item.VariantId);
             }
             
             cart = await _cartRepository.GetCartByUserIdAsync(userId);
@@ -133,8 +137,14 @@ namespace Malieakal.Api.Controllers
     public class AddCartItemRequest
     {
         public Guid ProductId { get; set; }
+        public Guid? SkuId { get; set; }
         public int? VariantId { get; set; }
-        public int Quantity { get; set; } = 1;
+        
+        // Robustness: Capture either "quantityToAdd" (from intent-based additions) or "quantity" (from legacy/sync calls)
+        public int? Quantity { get; set; }
+        public int? QuantityToAdd { get; set; }
+        
+        public int ResolvedQuantity => QuantityToAdd ?? Quantity ?? 1;
     }
 
     public class UpdateCartItemRequest

@@ -31,6 +31,7 @@ namespace Malieakal.Infrastructure.Repositories
 
             var statsSql = @"
                 SELECT 
+                    (SELECT COUNT(*) FROM Orders WHERE UserId = @UserId) AS TotalOrders,
                     (SELECT COUNT(*) FROM UserWarranties WHERE UserId = @UserId AND Status = 'Active') AS ActiveWarranties,
                     (SELECT COUNT(*) FROM UserCoupons WHERE UserId = @UserId AND Status = 'Available') AS UnusedCoupons,
                     (SELECT COUNT(*) FROM UserComplaints WHERE UserId = @UserId AND Status = 'Open') AS OpenComplaints";
@@ -38,7 +39,7 @@ namespace Malieakal.Infrastructure.Repositories
             var stats = await connection.QuerySingleAsync<AccountStatsDto>(statsSql, new { UserId = userId });
 
             var ordersSql = @"
-                SELECT OrderNumber, CreatedAt, TotalAmount, Status 
+                SELECT Id, OrderNumber, CreatedAt, TotalAmount, Status 
                 FROM Orders 
                 WHERE UserId = @UserId 
                 ORDER BY CreatedAt DESC 

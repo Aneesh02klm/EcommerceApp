@@ -13,6 +13,8 @@ namespace Malieakal.Domain.Entities
         public int Quantity { get; set; }
         public string? ProductImage { get; set; }
         public string? ProductSlug { get; set; }
+        public string? CategorySlug { get; set; }
+        public string? BrandSlug { get; set; }
         public string? WarrantyPeriod { get; set; }
         public DateTime? WarrantyExpiryDate { get; set; }
         public string? WarrantyStatus { get; set; }
