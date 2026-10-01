@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS Banners (
+    Id SERIAL PRIMARY KEY,
+    Title VARCHAR(200) NOT NULL,
+    Subtitle TEXT,
+    ImageUrl VARCHAR(255) NOT NULL,
+    TargetUrl VARCHAR(255),
+    IsActive BOOLEAN DEFAULT TRUE,
+    DisplayOrder INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS Features (
+    Id SERIAL PRIMARY KEY,
+    Title VARCHAR(100) NOT NULL,
+    Description TEXT NOT NULL,
+    IconUrl VARCHAR(255),
+    IsActive BOOLEAN DEFAULT TRUE,
+    DisplayOrder INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS Articles (
+    Id SERIAL PRIMARY KEY,
+    Title VARCHAR(200) NOT NULL,
+    Excerpt TEXT,
+    Content TEXT,
+    Category VARCHAR(100),
+    ImageUrl VARCHAR(255),
+    Author VARCHAR(100),
+    PublishedAt TIMESTAMP WITH TIME ZONE,
+    IsActive BOOLEAN DEFAULT TRUE
+);

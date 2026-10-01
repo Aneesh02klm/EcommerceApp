@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Malieakal.Api/Malieakal.Api.csproj" />
+  <Project Path="Malieakal.Application/Malieakal.Application.csproj" />
+  <Project Path="Malieakal.Domain/Malieakal.Domain.csproj" />
+  <Project Path="Malieakal.Infrastructure/Malieakal.Infrastructure.csproj" />
+</Solution>

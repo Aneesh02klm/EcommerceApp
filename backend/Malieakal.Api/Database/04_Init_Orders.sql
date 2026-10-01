@@ -1,0 +1,48 @@
+-- Orders & Payments Schema Foundation
+
+CREATE TABLE IF NOT EXISTS Addresses (
+    Id SERIAL PRIMARY KEY,
+    UserId UUID REFERENCES Users(Id) ON DELETE CASCADE,
+    FullName VARCHAR(100) NOT NULL,
+    AddressLine1 VARCHAR(255) NOT NULL,
+    AddressLine2 VARCHAR(255),
+    City VARCHAR(100) NOT NULL,
+    State VARCHAR(100) NOT NULL,
+    Pincode VARCHAR(20) NOT NULL,
+    Phone VARCHAR(20) NOT NULL,
+    IsDefault BOOLEAN DEFAULT FALSE,
+    CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Orders (
+    Id UUID PRIMARY KEY,
+    UserId UUID REFERENCES Users(Id),
+    OrderNumber VARCHAR(50) NOT NULL UNIQUE,
+    SubTotal DECIMAL(18, 2) NOT NULL,
+    Discount DECIMAL(18, 2) DEFAULT 0,
+    TotalAmount DECIMAL(18, 2) NOT NULL,
+    ShippingAddressId INT REFERENCES Addresses(Id),
+    Status VARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Paid, Processing, Shipped, Delivered, Cancelled
+    CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS OrderItems (
+    Id SERIAL PRIMARY KEY,
+    OrderId UUID REFERENCES Orders(Id) ON DELETE CASCADE,
+    ProductId UUID REFERENCES Products(Id),
+    ProductName VARCHAR(200) NOT NULL,
+    Price DECIMAL(18, 2) NOT NULL,
+    Quantity INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Payments (
+    Id UUID PRIMARY KEY,
+    OrderId UUID REFERENCES Orders(Id) ON DELETE CASCADE,
+    RazorpayOrderId VARCHAR(100) NOT NULL,
+    RazorpayPaymentId VARCHAR(100),
+    RazorpaySignature VARCHAR(255),
+    Status VARCHAR(50) NOT NULL DEFAULT 'Created', -- Created, Success, Failed
+    Amount DECIMAL(18, 2) NOT NULL,
+    CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
