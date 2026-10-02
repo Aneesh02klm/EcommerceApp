@@ -16,7 +16,8 @@ const menuStructure = [
       { name: 'All Products', href: '/admin/products' },
       { name: 'Categories', href: '/admin/categories' },
       { name: 'Brands', href: '/admin/brands' },
-      { name: 'Specifications', href: '/admin/specifications' }
+      { name: 'Specification Groups', href: '/admin/specification-groups' },
+        { name: 'Specifications', href: '/admin/specifications' }
     ]
   },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },

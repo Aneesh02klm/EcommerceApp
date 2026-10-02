@@ -1,44 +1,101 @@
 'use client';
 
-import React from 'react';
-import { 
-  Search, Bell, Plus, Filter, ChevronDown, Edit2, Trash2, 
-  ChevronLeft, ChevronRight 
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Plus, Filter, Edit2, Trash2, Loader2, Package, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/authStore';
+import { toast } from '@/components/ui/Toast';
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
+
+// Debounce hook
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 export default function AdminProducts() {
   const router = useRouter();
+  const { token } = useAuthStore();
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filters State
+  const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebounce(keyword, 400);
+  const [categoryId, setCategoryId] = useState('');
+  const [brandId, setBrandId] = useState('');
+  const [status, setStatus] = useState(''); // 'true' or 'false' or ''
+  const [stock, setStock] = useState(''); // 'in-stock' or ''
+
+  // Lookups for filters
+  const [categories, setCategories] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    fetchLookups();
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [debouncedKeyword, categoryId, brandId, status, stock]);
+
+  const fetchLookups = async () => {
+    try {
+      const [cRes, bRes] = await Promise.all([
+        fetch(`${API}/api/v1/categories`),
+        fetch(`${API}/api/v1/brands`)
+      ]);
+      const cJson = await cRes.json();
+      const bJson = await bRes.json();
+      if (cJson.success) setCategories(cJson.data);
+      if (bJson.success) setBrands(bJson.data);
+    } catch(err) {}
+  };
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (debouncedKeyword) params.append('Keyword', debouncedKeyword);
+      if (categoryId) params.append('CategoryId', categoryId);
+      if (brandId) params.append('BrandId', brandId);
+      if (status) params.append('IsActive', status);
+      if (stock === 'in-stock') params.append('InStockOnly', 'true');
+
+      const res = await fetch(`${API}/api/v1/products?${params.toString()}`);
+      const json = await res.json();
+      if (json.success) setProducts(json.data);
+    } catch(err) {
+      toast.error('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if(!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      const res = await fetch(`${API}/api/v1/products/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success('Product deleted');
+        fetchProducts();
+      }
+    } catch(err) {}
+  };
+
   return (
     <div className="flex flex-col gap-8 pb-10">
-      {/* Top Header */}
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-[#0B192C]">Products</h1>
-        <div className="flex items-center gap-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search orders, bills, customer IDs..." 
-              className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-md text-sm w-[320px] focus:outline-none focus:ring-1 focus:ring-[#0B192C]"
-            />
-          </div>
-          <div className="relative cursor-pointer">
-            <Bell size={20} className="text-gray-600" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-gray-50"></span>
-          </div>
-          <div className="flex items-center gap-3">
-            <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" className="w-9 h-9 rounded-full object-cover" />
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">System Owner</span>
-              <span className="text-sm font-bold text-[#0B192C] leading-none">George Malieakal</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Page Title & Add Button */}
-      <section className="flex items-end justify-between">
         <div>
           <h2 className="text-3xl font-serif font-black text-[#0B192C] tracking-tight mb-1">Products Directory</h2>
           <p className="text-sm font-medium text-gray-500">Manage Malieakal Plaza physical & virtual premium inventory</p>
@@ -46,128 +103,101 @@ export default function AdminProducts() {
         <button onClick={() => router.push('/admin/products/new')} className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-[#0B192C] font-bold text-[11px] uppercase tracking-widest px-6 py-3 rounded shadow-sm transition-colors">
           <Plus size={16} /> ADD NEW PRODUCT
         </button>
+      </header>
+
+      <section className="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div className="p-4 flex items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input 
+              type="text" 
+              value={keyword}
+              onChange={e => setKeyword(e.target.value)}
+              placeholder="Search by SKU, Model, Name..." 
+              className="w-full bg-gray-50 border border-gray-200 rounded-md py-2.5 pl-10 pr-4 text-sm font-semibold text-[#0B192C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" 
+            />
+          </div>
+          <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded transition-colors ${showFilters ? 'bg-gray-200 text-gray-800' : 'text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100'}`}>
+            <Filter size={16} /> {showFilters ? 'Hide Filters' : 'Filters'}
+          </button>
+        </div>
+
+        {showFilters && (
+          <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center gap-4 flex-wrap">
+            <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="border border-gray-200 rounded-md px-3 py-2 text-sm font-semibold bg-white">
+              <option value="">All Categories</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            
+            <select value={brandId} onChange={e => setBrandId(e.target.value)} className="border border-gray-200 rounded-md px-3 py-2 text-sm font-semibold bg-white">
+              <option value="">All Brands</option>
+              {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+
+            <select value={status} onChange={e => setStatus(e.target.value)} className="border border-gray-200 rounded-md px-3 py-2 text-sm font-semibold bg-white">
+              <option value="">Any Status</option>
+              <option value="true">Published (Active)</option>
+              <option value="false">Draft (Inactive)</option>
+            </select>
+
+            <select value={stock} onChange={e => setStock(e.target.value)} className="border border-gray-200 rounded-md px-3 py-2 text-sm font-semibold bg-white">
+              <option value="">All Inventory</option>
+              <option value="in-stock">In Stock Only</option>
+            </select>
+
+            {(categoryId || brandId || status || stock) && (
+              <button onClick={() => { setCategoryId(''); setBrandId(''); setStatus(''); setStock(''); }} className="flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 p-2">
+                <X size={14} /> Clear All
+              </button>
+            )}
+          </div>
+        )}
       </section>
 
-      {/* Filters Bar */}
-      <section className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-          <input 
-            type="text" 
-            placeholder="Search by name, SKU, or specs..." 
-            className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm w-full focus:outline-none focus:border-amber-400"
-          />
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <FilterDropdown label="Category: All" />
-          <FilterDropdown label="Brand: All" />
-          <FilterDropdown label="Status: Published" />
-          <FilterDropdown label="Stock: All" />
-        </div>
-      </section>
-
-      {/* Data Table */}
-      <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden min-h-[400px]">
+        {loading ? (
+           <div className="p-20 flex justify-center"><Loader2 className="animate-spin text-amber-500" size={32} /></div>
+        ) : products.length === 0 ? (
+           <div className="p-20 text-center text-gray-400 font-bold flex flex-col items-center">
+             <Package size={48} className="mb-4 opacity-30" /> 
+             No products match your criteria.
+           </div>
+        ) : (
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                <th className="py-4 pl-6 pr-2 w-12"><input type="checkbox" className="rounded border-gray-300 text-[#0B192C] focus:ring-[#0B192C]" /></th>
-                <th className="py-4 px-3">Image</th>
-                <th className="py-4 px-3">Product Name</th>
+            <thead className="bg-[#f8f9fc] border-b border-gray-200 text-[10px] uppercase font-black tracking-widest text-gray-500">
+              <tr>
+                <th className="py-4 px-6">Name</th>
                 <th className="py-4 px-3">SKU</th>
-                <th className="py-4 px-3">Category</th>
-                <th className="py-4 px-3">Brand</th>
-                <th className="py-4 px-3">MRP</th>
-                <th className="py-4 px-3 text-[#0B192C]">Selling Price</th>
                 <th className="py-4 px-3">Stock</th>
                 <th className="py-4 px-3">Status</th>
                 <th className="py-4 pr-6 pl-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="text-[#0B192C] font-semibold divide-y divide-gray-50">
-              <ProductRow 
-                name="Inverter Split AC 3-S..." sku="AR18CY3ZAWK" category="Air Conditioners" 
-                brand="Samsung" mrp="₹52,990" price="₹38,990" stock="45" status="Published" 
-              />
-              <ProductRow 
-                name="Smart Inverter Doubl..." sku="GL-S292RDSY" category="Refrigerators" 
-                brand="LG" mrp="₹32,990" price="₹24,490" stock="12" status="Published" 
-              />
-              <ProductRow 
-                name="Bravia 55-inch 4K Ul..." sku="KD-55X74L" category="Televisions" 
-                brand="Sony" mrp="₹74,900" price="₹54,990" stock="18" status="Published" 
-              />
-              <ProductRow 
-                name="Front Load Fully Auto..." sku="WAJ28262IN" category="Washing Machines" 
-                brand="Bosch" mrp="₹48,900" price="₹36,490" stock="8" status="Draft" 
-              />
-              <ProductRow 
-                name="Galaxy S24 Ultra 5G..." sku="SM-S928B" category="Mobiles" 
-                brand="Samsung" mrp="₹1,39,999" price="₹1,24,999" stock="22" status="Published" 
-              />
+              {products.map(p => (
+                <tr key={p.id} className="hover:bg-gray-50 transition-colors group">
+                  <td className="py-4 px-6">{p.name}</td>
+                  <td className="py-4 px-3 text-gray-400 font-medium text-xs">{p.sku}</td>
+                  <td className="py-4 px-3 font-black text-[#0B192C]">
+                    <span className={p.stock < 5 ? 'text-red-500' : ''}>{p.stock}</span>
+                  </td>
+                  <td className="py-4 px-3">
+                    <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {p.isActive ? 'Published' : 'Draft'}
+                    </span>
+                  </td>
+                  <td className="py-4 pr-6 pl-3 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => router.push(`/admin/products/${p.id}/edit`)} className="text-gray-400 hover:text-amber-500"><Edit2 size={16} /></button>
+                      <button onClick={() => handleDelete(p.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
-        </div>
-        
-        {/* Footer Actions & Pagination */}
-        <div className="bg-white border-t border-gray-100 p-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="text-sm font-medium text-gray-500">Selected: 0 items</span>
-            <div className="flex items-center gap-3">
-              <button className="text-xs font-bold text-[#0B192C] bg-white border border-gray-200 hover:bg-gray-50 px-4 py-2 rounded shadow-sm transition-colors">Archive</button>
-              <button className="text-xs font-bold text-[#0B192C] bg-white border border-gray-200 hover:bg-gray-50 px-4 py-2 rounded shadow-sm transition-colors">Update Pricing</button>
-              <button className="text-xs font-bold text-[#0B192C] bg-white border border-gray-200 hover:bg-gray-50 px-4 py-2 rounded shadow-sm transition-colors">Export</button>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
-            <span>Showing 1-20 of 1,847 products</span>
-            <div className="flex items-center gap-1">
-              <button className="p-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-400 hover:text-[#0B192C]"><ChevronLeft size={16} /></button>
-              <button className="p-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-400 hover:text-[#0B192C]"><ChevronRight size={16} /></button>
-            </div>
-          </div>
-        </div>
-      </section>
+        )}
+      </div>
     </div>
-  );
-}
-
-function FilterDropdown({ label }: { label: string }) {
-  return (
-    <button className="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-2 rounded text-[11px] font-bold text-[#0B192C] transition-colors">
-      {label} <ChevronDown size={14} className="text-gray-400" />
-    </button>
-  );
-}
-
-function ProductRow({ name, sku, category, brand, mrp, price, stock, status }: any) {
-  return (
-    <tr className="hover:bg-gray-50 transition-colors group">
-      <td className="py-4 pl-6 pr-2"><input type="checkbox" className="rounded border-gray-300 text-[#0B192C] focus:ring-[#0B192C]" /></td>
-      <td className="py-4 px-3"><div className="w-10 h-10 bg-gray-100 rounded border border-gray-200"></div></td>
-      <td className="py-4 px-3">{name}</td>
-      <td className="py-4 px-3 text-gray-400 font-medium text-xs">{sku}</td>
-      <td className="py-4 px-3 text-gray-500 font-medium">{category}</td>
-      <td className="py-4 px-3">{brand}</td>
-      <td className="py-4 px-3 text-gray-400 line-through font-medium text-xs">{mrp}</td>
-      <td className="py-4 px-3 font-black text-[#0B192C]">{price}</td>
-      <td className="py-4 px-3 text-gray-500 font-medium">{stock}</td>
-      <td className="py-4 px-3">
-        <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${
-          status === 'Published' ? 'bg-[#e8f5ed] text-[#1a8b44]' : 'bg-amber-50 text-amber-600'
-        }`}>
-          {status}
-        </span>
-      </td>
-      <td className="py-4 pr-6 pl-3 text-right">
-        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="text-gray-400 hover:text-amber-500"><Edit2 size={16} /></button>
-          <button className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
-        </div>
-      </td>
-    </tr>
   );
 }

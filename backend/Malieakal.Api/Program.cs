@@ -86,7 +86,7 @@ using (var scope = app.Services.CreateScope())
             "Database/106_PromoCodes.sql",
             "Database/107_OrderTracking.sql",
               "Database/108_AdminModules.sql",
-              "Database/109_FinalAdminModules.sql",
+              "Database/109_FinalAdminModules.sql", "Database/110_SpecsGroup.sql", "Database/112_FixSequence.sql", "Database/111_UniversalCategorySpecs.sql", "Database/113_MobileCategorySpecs.sql", "Database/114_SpecificationGroups.sql",
             "Database/108_AddVariantIdToCartItems.sql"
         };
         

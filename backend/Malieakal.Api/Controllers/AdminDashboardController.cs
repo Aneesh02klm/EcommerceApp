@@ -8,6 +8,16 @@ using Dapper;
 
 namespace Malieakal.Api.Controllers
 {
+    public class PeriodMetricsResult {
+        public decimal PeriodSales { get; set; }
+        public int PeriodOrders { get; set; }
+    }
+
+    public class StockMetricsResult {
+        public int ProductsInStock { get; set; }
+        public int LowStockAlerts { get; set; }
+    }
+
     [ApiController]
     [Route("api/v1/admin/dashboard")]
     [Authorize(Roles = "Admin")]
@@ -21,36 +31,53 @@ namespace Malieakal.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetDashboardMetrics()
+        public async Task<IActionResult> GetDashboardMetrics([FromQuery] string range = "today", [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null)
         {
             try
             {
+                string safeRange = range?.ToLower().Replace(" ", "").Replace("-", "") ?? "today";
+                DateTime startDate = DateTime.UtcNow.Date;
+                DateTime endDate = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+
+                if (safeRange == "yesterday") {
+                    startDate = DateTime.UtcNow.Date.AddDays(-1);
+                    endDate = startDate.AddDays(1).AddTicks(-1);
+                } else if (safeRange == "last30days") {
+                    startDate = DateTime.UtcNow.Date.AddDays(-30);
+                } else if (safeRange == "last7days") {
+                    startDate = DateTime.UtcNow.Date.AddDays(-7);
+                } else if (safeRange == "thismonth") {
+                    startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+                } else if (safeRange == "custom" && start.HasValue && end.HasValue) {
+                    startDate = start.Value.ToUniversalTime().Date;
+                    endDate = end.Value.ToUniversalTime().Date.AddDays(1).AddTicks(-1);
+                }
+
                 using var connection = _dbConnectionFactory.CreateConnection();
                 var sql = @"
-                    -- 1. Today's Sales & Orders
+                    -- 1. Period Sales & Orders
                     SELECT 
-                        COALESCE(SUM(TotalAmount), 0) as TodaysSales,
-                        COUNT(Id) as TodaysOrders
+                        COALESCE(SUM(TotalAmount), 0) as PeriodSales,
+                        COUNT(Id) as PeriodOrders
                     FROM Orders
-                    WHERE DATE(CreatedAt) = CURRENT_DATE;
+                    WHERE Status != 'Cancelled' AND CreatedAt >= @StartDate AND CreatedAt <= @EndDate;
 
                     -- 2. Active Customers
                     SELECT COUNT(u.Id) as ActiveCustomers
                     FROM Users u
                     JOIN UserRoles ur ON u.Id = ur.UserId
                     JOIN Roles r ON ur.RoleId = r.Id
-                    WHERE r.Name = 'Customer';
+                    WHERE r.Name = 'Customer' AND u.CreatedAt >= @StartDate AND u.CreatedAt <= @EndDate;
 
                     -- 3. Pending Orders
                     SELECT COUNT(Id) as PendingOrders
                     FROM Orders
-                    WHERE Status NOT IN ('Delivered', 'Cancelled');
+                    WHERE Status NOT IN ('Delivered', 'Cancelled') AND CreatedAt >= @StartDate AND CreatedAt <= @EndDate;
 
                     -- 4. Revenue This Month
                     SELECT COALESCE(SUM(TotalAmount), 0) as RevenueThisMonth
                     FROM Orders
-                    WHERE EXTRACT(MONTH FROM CreatedAt) = EXTRACT(MONTH FROM CURRENT_DATE)
-                      AND EXTRACT(YEAR FROM CreatedAt) = EXTRACT(YEAR FROM CURRENT_DATE);
+                    WHERE Status != 'Cancelled' AND CreatedAt >= @StartDate AND CreatedAt <= @EndDate;
 
                     -- 5. Products In Stock & Low Stock
                     SELECT 
@@ -62,9 +89,9 @@ namespace Malieakal.Api.Controllers
                     -- 6. Open Complaints
                     SELECT COUNT(Id) as OpenComplaints
                     FROM UserComplaints
-                    WHERE Status = 'Open';
+                    WHERE Status = 'Open' AND CreatedAt >= @StartDate AND CreatedAt <= @EndDate;
 
-                    -- 7. Recent Orders (limit 5)
+                    -- 7. Recent Orders
                     SELECT 
                         o.OrderNumber as Id, 
                         a.FullName as Customer, 
@@ -88,35 +115,58 @@ namespace Malieakal.Api.Controllers
                     GROUP BY p.Id, p.Name
                     ORDER BY UnitsSold DESC
                     LIMIT 3;
+
+                    -- 9. Revenue Trend
+                    SELECT 
+                        TO_CHAR(DATE(CreatedAt), 'YYYY-MM-DD') as Date,
+                        COALESCE(SUM(TotalAmount), 0) as Revenue
+                    FROM Orders
+                    WHERE Status != 'Cancelled' AND CreatedAt >= @StartDate AND CreatedAt <= @EndDate
+                    GROUP BY DATE(CreatedAt)
+                    ORDER BY DATE(CreatedAt);
+
+                    -- 10. Active Promotion (Latest Coupon)
+                    SELECT 
+                        Code as Title,
+                        DiscountType,
+                        DiscountValue,
+                        (SELECT COUNT(Id) FROM Orders WHERE Discount > 0 AND CreatedAt >= @StartDate AND CreatedAt <= @EndDate) as Conversions
+                    FROM Coupons
+                    WHERE IsActive = true
+                    ORDER BY CreatedAt DESC
+                    LIMIT 1;
                 ";
 
-                using var multi = await connection.QueryMultipleAsync(sql);
+                using var multi = await connection.QueryMultipleAsync(sql, new { StartDate = startDate, EndDate = endDate });
 
-                var todaysMetrics = await multi.ReadSingleAsync<dynamic>();
+                var periodMetrics = await multi.ReadSingleAsync<PeriodMetricsResult>();
                 var activeCustomers = await multi.ReadSingleAsync<int>();
                 var pendingOrders = await multi.ReadSingleAsync<int>();
                 var revenueThisMonth = await multi.ReadSingleAsync<decimal>();
-                var stockMetrics = await multi.ReadSingleAsync<dynamic>();
+                var stockMetrics = await multi.ReadSingleAsync<StockMetricsResult>();
                 var openComplaints = await multi.ReadSingleAsync<int>();
-                
                 var recentOrders = await multi.ReadAsync<dynamic>();
                 var topProducts = await multi.ReadAsync<dynamic>();
+                var revenueTrend = await multi.ReadAsync<dynamic>();
+                var activePromotion = await multi.ReadFirstOrDefaultAsync<dynamic>();
 
                 return Ok(new
                 {
                     success = true,
                     data = new
                     {
-                        todaysSales = todaysMetrics.todayssales,
-                        todaysOrders = todaysMetrics.todaysorders,
-                        activeCustomers,
-                        pendingOrders,
-                        revenueThisMonth,
-                        productsInStock = stockMetrics.productsinstock,
-                        lowStockAlerts = stockMetrics.lowstockalerts,
-                        openComplaints,
-                        recentOrders,
-                        topProducts
+                        periodSales = periodMetrics.PeriodSales,
+                        periodOrders = periodMetrics.PeriodOrders,
+                        activeCustomers = activeCustomers,
+                        pendingOrders = pendingOrders,
+                        periodRevenue = revenueThisMonth,
+                        productsInStock = stockMetrics.ProductsInStock,
+                        lowStockAlerts = stockMetrics.LowStockAlerts,
+                        openComplaints = openComplaints,
+                        recentOrders = recentOrders,
+                        topProducts = topProducts,
+                        revenueTrend = revenueTrend,
+                        activePromotion = activePromotion
                     }
                 });
             }

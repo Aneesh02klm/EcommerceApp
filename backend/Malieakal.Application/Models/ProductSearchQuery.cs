@@ -14,5 +14,6 @@ namespace Malieakal.Application.Models
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 100;
         public bool? InStockOnly { get; set; }
+        public bool? IsActive { get; set; }
     }
 }

@@ -159,8 +159,17 @@ namespace Malieakal.Infrastructure.Repositories
                 FROM Products p
                 LEFT JOIN Categories c ON p.CategoryId = c.Id
                 LEFT JOIN Brands b ON p.BrandId = b.Id
-                WHERE p.IsActive = TRUE ");
-            var parameters = new DynamicParameters();
+                WHERE 1=1 ");
+              var parameters = new DynamicParameters();
+            if (query.IsActive.HasValue)
+            {
+                sql.Append(" AND p.IsActive = @IsActive ");
+                parameters.Add("IsActive", query.IsActive.Value);
+            }
+            else
+            {
+                sql.Append(" AND p.IsActive = TRUE ");
+            }
 
             if (!string.IsNullOrWhiteSpace(query.Keyword))
             {

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
@@ -14,12 +15,56 @@ export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user, token } = useAuthStore();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [dateRange, setDateRange] = useState('last30days');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
+
+  // Calculate dates based on preset
+  useEffect(() => {
+    const d = new Date();
+    const end = new Date();
+    if (dateRange === 'today') {
+      setStartDate(d.toISOString().split('T')[0]);
+      setEndDate(d.toISOString().split('T')[0]);
+    } else if (dateRange === 'yesterday') {
+      d.setDate(d.getDate() - 1);
+      setStartDate(d.toISOString().split('T')[0]);
+      setEndDate(d.toISOString().split('T')[0]);
+    } else if (dateRange === 'last7days') {
+      d.setDate(d.getDate() - 7);
+      setStartDate(d.toISOString().split('T')[0]);
+      setEndDate(end.toISOString().split('T')[0]);
+    } else if (dateRange === 'last30days') {
+      d.setDate(d.getDate() - 30);
+      setStartDate(d.toISOString().split('T')[0]);
+      setEndDate(end.toISOString().split('T')[0]);
+    } else if (dateRange === 'thismonth') {
+      d.setDate(1);
+      setStartDate(d.toISOString().split('T')[0]);
+      setEndDate(end.toISOString().split('T')[0]);
+    }
+  }, [dateRange]);
 
   useEffect(() => {
     async function fetchMetrics() {
+      if (!token) return;
       try {
-        const res = await fetch(`${API}/api/v1/admin/dashboard`, {
+        setIsRefreshing(true);
+        
+        
+        let url = `${API}/api/v1/admin/dashboard?range=${dateRange}`;
+        if (dateRange === 'custom') {
+          if (!startDate || !endDate) {
+            setIsRefreshing(false);
+            return;
+          }
+          url += `&start=${startDate}&end=${endDate}`;
+        }
+        
+        const res = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -32,10 +77,11 @@ export default function AdminDashboard() {
         console.error(err);
       } finally {
         setLoading(false);
+        setIsRefreshing(false);
       }
     }
-    if (token) fetchMetrics();
-  }, [token]);
+    fetchMetrics();
+  }, [token, dateRange, startDate, endDate]);
 
   if (loading) {
     return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="animate-spin text-amber-500" size={32} /></div>;
@@ -56,6 +102,13 @@ export default function AdminDashboard() {
             <input 
               type="text" 
               placeholder="Search orders, bills, customer IDs..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  router.push(`/admin/orders?search=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-md text-sm w-[320px] focus:outline-none focus:ring-1 focus:ring-[#0B192C]"
             />
           </div>
@@ -66,8 +119,8 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3">
             <img src={user?.avatarUrl || "https://i.pravatar.cc/150?u=admin"} alt="Admin" className="w-9 h-9 rounded-full object-cover" />
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{user?.roles?.join(', ')}</span>
-              <span className="text-sm font-bold text-[#0B192C] leading-none">{user?.firstName} {user?.lastName}</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{Array.isArray(user?.roles) ? user.roles.map((r: any) => typeof r === 'string' ? r : (r.name || '')).join(', ') : 'ADMIN'}</span>
+              <span className="text-sm font-bold text-[#0B192C] leading-none">{typeof user?.firstName === 'string' ? user?.firstName : 'Admin'} {typeof user?.lastName === 'string' ? user?.lastName : ''}</span>
             </div>
           </div>
         </div>
@@ -81,21 +134,35 @@ export default function AdminDashboard() {
         </div>
         <div className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded shadow-sm text-sm font-bold text-[#0B192C]">
           <Calendar size={16} className="text-amber-500" />
-          {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+          <select value={dateRange} onChange={e => setDateRange(e.target.value)} className="bg-transparent outline-none cursor-pointer pr-2">
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7days">Last 7 Days</option>
+            <option value="last30days">Last 30 Days</option>
+            <option value="thismonth">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          {dateRange === 'custom' && (
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-200">
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent outline-none cursor-pointer text-xs" />
+              <span className="text-gray-400 text-xs">to</span>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent outline-none cursor-pointer text-xs" />
+            </div>
+          )}
         </div>
       </section>
 
       {/* Metric Cards Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <MetricCard title="TODAY'S SALES" value={formatCurrency(data?.todaysSales)} badge="+12%" badgeType="positive" />
-        <MetricCard title="TODAY'S ORDERS" value={formatNumber(data?.todaysOrders)} badge="+8%" badgeType="positive" />
-        <MetricCard title="ACTIVE CUSTOMERS" value={formatNumber(data?.activeCustomers)} badge="+4.1%" badgeType="positive" />
-        <MetricCard title="PENDING ORDERS" value={formatNumber(data?.pendingOrders)} badge="-12%" badgeType="positive" />
+        <MetricCard isLoading={isRefreshing} title="PERIOD SALES" value={formatCurrency(data?.periodSales)} />
+        <MetricCard isLoading={isRefreshing} title="PERIOD ORDERS" value={formatNumber(data?.periodOrders)} />
+        <MetricCard isLoading={isRefreshing} title="NEW CUSTOMERS" value={formatNumber(data?.activeCustomers)} />
+        <MetricCard isLoading={isRefreshing} title="PENDING ORDERS" value={formatNumber(data?.pendingOrders)} />
         
-        <MetricCard title="REVENUE THIS MONTH" value={formatCurrency(data?.revenueThisMonth)} badge="+18.5%" badgeType="positive" />
-        <MetricCard title="PRODUCTS IN STOCK" value={formatNumber(data?.productsInStock)} />
-        <MetricCard title="LOW STOCK ALERTS" value={formatNumber(data?.lowStockAlerts)} badge={`${data?.lowStockAlerts || 0} Items Low`} badgeType="warning" />
-        <MetricCard title="OPEN COMPLAINTS" value={formatNumber(data?.openComplaints)} badge="Needs Review" badgeType="warning" />
+        <MetricCard isLoading={isRefreshing} title="PERIOD REVENUE" value={formatCurrency(data?.periodRevenue)} />
+        <MetricCard isLoading={isRefreshing} title="PRODUCTS IN STOCK" value={formatNumber(data?.productsInStock)} />
+        <MetricCard isLoading={isRefreshing} title="LOW STOCK ALERTS" value={formatNumber(data?.lowStockAlerts)} badge={`${data?.lowStockAlerts || 0} Items Low`} badgeType="warning" />
+        <MetricCard isLoading={isRefreshing} title="OPEN COMPLAINTS" value={formatNumber(data?.openComplaints)} badge="Needs Review" badgeType="warning" />
       </section>
 
       {/* Middle Section (Chart + Quick Actions) */}
@@ -103,7 +170,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-lg font-bold text-[#0B192C]">Revenue Trend (Last 30 Days)</h3>
-            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">SCALE: ₹ LAKHS</span>
+            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">ACTUAL SCALE</span>
           </div>
           <div className="h-[220px] relative w-full flex items-end">
             <svg viewBox="0 0 800 200" className="w-full h-full overflow-visible">
@@ -194,17 +261,17 @@ export default function AdminDashboard() {
             <div className="inline-block bg-amber-400 text-[#0B192C] text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded mb-3">
               ACTIVE PROMOTION
             </div>
-            <h3 className="text-xl font-serif font-bold text-white mb-1">Monsoon Special Sale</h3>
-            <p className="text-xs text-gray-400 mb-6">Live across Kollam District region</p>
+            <h3 className="text-xl font-serif font-bold text-white mb-1">{data?.activePromotion?.title || 'No Active Campaigns'}</h3>
+            <p className="text-xs text-gray-400 mb-6">{data?.activePromotion ? `${data.activePromotion.discountvalue} ${data.activePromotion.discounttype === 'Percentage' ? '%' : '₹'} Off` : 'Activate a coupon or flash sale'}</p>
             
             <div className="flex justify-between items-end border-t border-white/10 pt-4">
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Recipients</p>
-                <p className="text-sm font-bold text-white">12,450 Users</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Status</p>
+                <p className="text-sm font-bold text-white">{data?.activePromotion ? 'Live' : 'Inactive'}</p>
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Conversions</p>
-                <p className="text-sm font-bold text-amber-400">184 Sales</p>
+                <p className="text-sm font-bold text-amber-400">{data?.activePromotion?.conversions || 0} Sales</p>
               </div>
             </div>
           </div>
@@ -214,12 +281,12 @@ export default function AdminDashboard() {
   );
 }
 
-function MetricCard({ title, value, badge, badgeType }: any) {
+function MetricCard({ title, value, badge, badgeType, isLoading }: any) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
       <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">{title}</h3>
       <div className="flex items-end justify-between">
-        <span className="text-2xl font-black text-[#0B192C]">{value}</span>
+        {isLoading ? <Loader2 className="animate-spin text-amber-500" size={24} /> : <span className="text-2xl font-black text-[#0B192C]">{value}</span>}
         {badge && (
           <span className={`text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1 ${
             badgeType === 'positive' ? 'bg-[#e8f5ed] text-[#1a8b44]' : 
