@@ -1,0 +1,1 @@
+ALTER TABLE Coupons ADD COLUMN IF NOT EXISTS UsageLimitPerUser INT;

@@ -28,6 +28,7 @@ namespace Malieakal.Infrastructure
             services.AddScoped<IPaymentService, Malieakal.Infrastructure.Services.RazorpayService>();
             services.AddScoped<IAccountRepository, Malieakal.Infrastructure.Repositories.AccountRepository>();
             services.AddScoped<IBannerRepository, Malieakal.Infrastructure.Repositories.BannerRepository>();
+            services.AddScoped<IFileService, Malieakal.Infrastructure.Services.FileManagementService>();
             services.AddScoped<Malieakal.Application.Services.IDeliveryEngineService, Malieakal.Application.Services.DeliveryEngineService>();
             
             // Register Redis Distributed Cache

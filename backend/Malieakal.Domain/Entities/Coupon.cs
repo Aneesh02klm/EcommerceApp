@@ -15,6 +15,7 @@ namespace Malieakal.Domain.Entities
         public DateTime CreatedAt { get; set; }
         public string? AssignedToEmail { get; set; }
         public int? UsageLimit { get; set; }
+        public int? UsageLimitPerUser { get; set; }
         public int TimesUsed { get; set; }
     }
 }

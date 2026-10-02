@@ -173,7 +173,7 @@ namespace Malieakal.Api.Controllers
             string? appliedPromoCode = null;
             if (!string.IsNullOrWhiteSpace(request.PromoCode))
             {
-                var coupon = await _couponRepository.GetByCodeAsync(request.PromoCode);
+                var coupon = await _couponRepository.GetByCodeAsync(request.PromoCode, GetUserId());
                 if (coupon != null && cart.FinalTotal >= coupon.MinOrderAmount)
                 {
                     appliedPromoCode = coupon.Code;

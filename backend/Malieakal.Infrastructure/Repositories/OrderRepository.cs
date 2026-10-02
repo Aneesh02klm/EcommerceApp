@@ -271,6 +271,10 @@ namespace Malieakal.Infrastructure.Repositories
                     new { UserId = order.UserId },
                     transaction);
 
+                
+                if (!string.IsNullOrEmpty(order.PromoCode)) {
+                    await connection.ExecuteAsync("UPDATE Coupons SET TimesUsed = TimesUsed + 1 WHERE Code = @PromoCode", new { PromoCode = order.PromoCode }, transaction);
+                }
                 transaction.Commit();
                 order.Id = newOrderId; // update the original object so the controller gets the new ID
                 return newOrderId;
