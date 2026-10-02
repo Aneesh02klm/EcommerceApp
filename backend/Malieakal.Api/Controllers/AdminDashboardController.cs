@@ -82,7 +82,7 @@ namespace Malieakal.Api.Controllers
                     -- 5. Products In Stock & Low Stock
                     SELECT 
                         COUNT(Id) as ProductsInStock,
-                        COUNT(CASE WHEN StockQuantity <= 5 THEN 1 END) as LowStockAlerts
+                        COUNT(CASE WHEN Stock <= 5 THEN 1 END) as LowStockAlerts
                     FROM Products
                     WHERE IsActive = true;
 

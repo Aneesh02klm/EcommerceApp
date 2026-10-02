@@ -13,6 +13,7 @@ namespace Malieakal.Domain.Entities
         public string? SeoTitle { get; set; }
         public string? SeoDescription { get; set; }
         public int DisplayOrder { get; set; }
+        public bool ShowInTopNav { get; set; }
         public string SpecificationTemplate { get; set; } = "{}";
         public string HighlightKeys { get; set; } = "[]";
     }

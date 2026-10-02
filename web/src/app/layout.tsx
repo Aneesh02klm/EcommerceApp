@@ -21,6 +21,18 @@ export const metadata: Metadata = {
   description: 'Shop premium electronics, home appliances, washing machines, refrigerators, ACs and more at Malieakal Electronics, Kerala.',
 };
 
+async function fetchNavCategories() {
+  try {
+    const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
+    const res = await fetch(`${API}/api/v1/categories/storefront/navigation`, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.success ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
 async function fetchCategories() {
   try {
     const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
@@ -35,6 +47,7 @@ async function fetchCategories() {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const categories = await fetchCategories();
+  const navCategories = await fetchNavCategories();
 
   return (
     <html lang="en">
@@ -121,18 +134,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <CategoryNavClient categories={categories} />
                 </Suspense>
 
-                {['Televisions', 'Washing Machines', 'Refrigerators', 'Air Conditioners'].map(name => {
-                  const slug = name.toLowerCase().replace(/ /g, '-');
-                  return (
-                    <Link
-                      key={slug}
-                      href={`/products/${slug}`}
-                      className="py-2.5 text-[11px] font-bold text-gray-600 hover:text-amber-500 uppercase tracking-wider transition-colors whitespace-nowrap"
-                    >
-                      {name}
-                    </Link>
-                  );
-                })}
+                {navCategories.map((cat: any) => (
+                  <Link
+                    key={cat.slug}
+                    href={`/products/${cat.slug}`}
+                    className="py-2.5 text-[11px] font-bold text-gray-600 hover:text-amber-500 uppercase tracking-wider transition-colors whitespace-nowrap"
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
               </div>
 
               <div className="flex items-center gap-5 border-l border-gray-100 pl-7">

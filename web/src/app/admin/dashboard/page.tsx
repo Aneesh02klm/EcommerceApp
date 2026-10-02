@@ -172,22 +172,30 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-bold text-[#0B192C]">Revenue Trend (Last 30 Days)</h3>
             <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">ACTUAL SCALE</span>
           </div>
-          <div className="h-[220px] relative w-full flex items-end">
-            <svg viewBox="0 0 800 200" className="w-full h-full overflow-visible">
-              <path d="M 0 170 L 80 140 L 160 180 L 240 110 L 320 160 L 400 50 L 480 90 L 560 30 L 640 80 L 720 20 L 800 60" 
-                fill="none" stroke="#fbbf24" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-              {[0, 80, 160, 240, 320, 400, 480, 560, 640, 720, 800].map((x, i) => {
-                const points = [170, 140, 180, 110, 160, 50, 90, 30, 80, 20, 60];
-                return <circle key={i} cx={x} cy={points[i]} r="6" fill="#0B192C" stroke="#fbbf24" strokeWidth="2" />;
-              })}
-              <line x1="0" y1="200" x2="800" y2="200" stroke="#e5e7eb" strokeWidth="1" strokeDasharray="4 4" />
-              <text x="-20" y="204" fontSize="10" fill="#9ca3af" className="font-bold">1L</text>
-              <line x1="0" y1="100" x2="800" y2="100" stroke="#e5e7eb" strokeWidth="1" strokeDasharray="4 4" />
-              <text x="-20" y="104" fontSize="10" fill="#9ca3af" className="font-bold">2L</text>
-              <line x1="0" y1="0" x2="800" y2="0" stroke="#e5e7eb" strokeWidth="1" strokeDasharray="4 4" />
-              <text x="-20" y="4" fontSize="10" fill="#9ca3af" className="font-bold">3L</text>
-            </svg>
-          </div>
+          <div className="h-[220px] relative w-full">
+              {data?.revenueTrend && data.revenueTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.revenueTrend} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#fbbf24" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f3f4f6" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val >= 100000 ? `${(val / 100000).toFixed(1)}L` : val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', color: '#0B192C' }}
+                      formatter={(val) => [`₹${val}`, 'Revenue']}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="#fbbf24" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                 <div className="flex h-full items-center justify-center text-sm font-semibold text-gray-400">No revenue data available for this period.</div>
+              )}
+            </div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">

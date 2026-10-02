@@ -19,6 +19,13 @@ namespace Malieakal.Api.Controllers
             _specRepo = specRepo;
         }
 
+        [HttpGet("storefront/navigation")]
+        public async Task<IActionResult> GetStorefrontNavigation()
+        {
+            var categories = await _categoryRepo.GetTopNavCategoriesAsync();
+            return Ok(new { success = true, data = categories });
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {

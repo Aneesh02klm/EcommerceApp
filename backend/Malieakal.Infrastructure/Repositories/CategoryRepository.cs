@@ -21,6 +21,12 @@ namespace Malieakal.Infrastructure.Repositories
             return await connection.QueryAsync<Category>("SELECT * FROM Categories ORDER BY DisplayOrder");
         }
 
+        public async Task<IEnumerable<Category>> GetTopNavCategoriesAsync()
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            return await connection.QueryAsync<Category>("SELECT * FROM Categories WHERE IsActive = true AND ShowInTopNav = true ORDER BY DisplayOrder ASC");
+        }
+
         public async Task<Category?> GetByIdAsync(int id)
         {
             using var connection = _connectionFactory.CreateConnection();
@@ -31,8 +37,8 @@ namespace Malieakal.Infrastructure.Repositories
         {
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
-                INSERT INTO Categories (Name, Slug, Description, ImageUrl, IsActive, SeoTitle, SeoDescription, DisplayOrder, SpecificationTemplate)
-                VALUES (@Name, @Slug, @Description, @ImageUrl, @IsActive, @SeoTitle, @SeoDescription, @DisplayOrder, @SpecificationTemplate::jsonb)
+                INSERT INTO Categories (Name, Slug, Description, ImageUrl, IsActive, SeoTitle, SeoDescription, DisplayOrder, SpecificationTemplate, ShowInTopNav)
+                VALUES (@Name, @Slug, @Description, @ImageUrl, @IsActive, @SeoTitle, @SeoDescription, @DisplayOrder, @SpecificationTemplate::jsonb, @ShowInTopNav)
                 RETURNING Id;";
             return await connection.ExecuteScalarAsync<int>(sql, category);
         }
@@ -43,7 +49,7 @@ namespace Malieakal.Infrastructure.Repositories
             var sql = @"
                 UPDATE Categories 
                 SET Name = @Name, Slug = @Slug, Description = @Description, ImageUrl = @ImageUrl, 
-                    IsActive = @IsActive, SeoTitle = @SeoTitle, SeoDescription = @SeoDescription, DisplayOrder = @DisplayOrder, SpecificationTemplate = @SpecificationTemplate::jsonb
+                    IsActive = @IsActive, SeoTitle = @SeoTitle, SeoDescription = @SeoDescription, DisplayOrder = @DisplayOrder, SpecificationTemplate = @SpecificationTemplate::jsonb, ShowInTopNav = @ShowInTopNav
                 WHERE Id = @Id;";
             await connection.ExecuteAsync(sql, category);
         }

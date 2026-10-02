@@ -16,6 +16,7 @@ interface Category {
   slug: string;
   description: string | null;
   isActive: boolean;
+  showInTopNav: boolean;
   displayOrder: number;
 }
 
@@ -33,6 +34,7 @@ export default function AdminCategoriesPage() {
     slug: '',
     description: '',
     isActive: true,
+    showInTopNav: false,
     displayOrder: 0
   });
 
@@ -61,11 +63,12 @@ export default function AdminCategoriesPage() {
         slug: category.slug,
         description: category.description || '',
         isActive: category.isActive,
+        showInTopNav: category.showInTopNav || false,
         displayOrder: category.displayOrder
       });
     } else {
       setEditingCategory(null);
-      setFormData({ name: '', slug: '', description: '', isActive: true, displayOrder: 0 });
+      setFormData({ name: '', slug: '', description: '', isActive: true, showInTopNav: false, displayOrder: 0 });
     }
     setIsModalOpen(true);
   };
@@ -191,6 +194,9 @@ export default function AdminCategoriesPage() {
                             {category.isActive ? 'Active' : 'Hidden'}
                           </span>
                         </td>
+                        <td className="px-6 py-4">
+                          {category.showInTopNav ? <span className="text-amber-500 font-bold text-xs">★ Top Nav</span> : <span className="text-gray-400 font-semibold text-xs">-</span>}
+                        </td>
                         <td className="px-6 py-4 font-semibold text-gray-600">{category.displayOrder}</td>
                         <td className="px-6 py-4 text-right space-x-3">
                           <button 
@@ -269,7 +275,7 @@ export default function AdminCategoriesPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Status</label>
                     <select 
@@ -289,6 +295,18 @@ export default function AdminCategoriesPage() {
                       onChange={(e) => setFormData({...formData, displayOrder: parseInt(e.target.value) || 0})}
                       className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm font-semibold text-[#0B192C]"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Top Navigation</label>
+                    <label className="flex items-center space-x-2 mt-3 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={formData.showInTopNav}
+                        onChange={(e) => setFormData({...formData, showInTopNav: e.target.checked})}
+                        className="w-4 h-4 text-amber-500 focus:ring-amber-500 border-gray-300 rounded cursor-pointer"
+                      />
+                      <span className="text-sm font-semibold text-gray-700">Show in Top Menu</span>
+                    </label>
                   </div>
                 </div>
               </div>
