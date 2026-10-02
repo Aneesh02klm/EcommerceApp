@@ -4,9 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ArrowLeft, Save, Plus, Package, Image as ImageIcon, Layers } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Package, Image as ImageIcon, Layers, Bot, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
+import { Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
@@ -182,7 +183,59 @@ export default function CreateProductPage() {
     }
   };
 
+
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
+  const generateWithAI = async () => {
+    if (!formData.name) {
+      toast.error('Please enter at least a Product Name or Model to generate details.');
+      return;
+    }
+    
+    setIsGeneratingAI(true);
+    toast.success('AI is researching this product...');
+    
+    try {
+      const res = await fetch(`${API}/api/v1/admin/ai/generate-product`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ prompt: formData.name })
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setFormData(prev => ({
+          ...prev,
+          description: json.data.description || prev.description,
+          mrp: json.data.mrp || prev.mrp,
+          discount: (json.data.mrp || prev.mrp) - (json.data.price || prev.mrp),
+          sku: json.data.sku || prev.sku
+        }));
+        
+        // Auto-map specs based on name loosely
+        if (json.data.specifications) {
+           const newSpecs = { ...specValues };
+           specDefinitions.forEach(def => {
+             const key = Object.keys(json.data.specifications).find(k => def.name.toLowerCase().includes(k.toLowerCase()));
+             if (key) {
+               newSpecs[def.id] = json.data.specifications[key];
+             }
+           });
+           setSpecValues(newSpecs);
+        }
+        
+        toast.success('Product details generated successfully!');
+      } else {
+        toast.error('AI generation failed.');
+      }
+    } catch (err) {
+      toast.error('Network error during AI generation.');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   const updateSpecValue = (id: number, val: string) => {
+
     setSpecValues(prev => ({ ...prev, [id]: val }));
   };
 
@@ -199,11 +252,19 @@ export default function CreateProductPage() {
             </h1>
             <p className="text-sm text-gray-500 font-semibold mt-1">Add a new item to the catalog.</p>
           </div>
+        
         </div>
-        <Button type="submit" variant="primary" className="font-extrabold uppercase tracking-widest shadow-lg shadow-[#0B192C]/20 flex items-center">
-          <Save size={18} className="mr-2" /> Save Product
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button type="button" onClick={generateWithAI} disabled={isGeneratingAI} className="bg-amber-100 text-amber-600 hover:bg-amber-200 font-extrabold tracking-widest shadow-sm flex items-center">
+            {isGeneratingAI ? <Loader2 size={18} className="mr-2 animate-spin" /> : <Sparkles size={18} className="mr-2" />} 
+            Generate AI
+          </Button>
+          <Button type="submit" variant="primary" className="font-extrabold uppercase tracking-widest shadow-lg shadow-[#0B192C]/20 flex items-center">
+            <Save size={18} className="mr-2" /> Save Product
+          </Button>
+        </div>
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         

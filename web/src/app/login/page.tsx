@@ -19,7 +19,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/account');
+      if (useAuthStore.getState().user?.roles?.some((r: any) => typeof r === 'string' ? r === 'Admin' : (r?.name === 'Admin' || r?.Name === 'Admin'))) {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/account');
+      }
     }
   }, [isAuthenticated, router]);
 
@@ -37,7 +41,11 @@ export default function LoginPage() {
       if (res.ok && data.success) {
         setAuth(data.user, data.token);
         toast.success('Successfully logged in!');
-        router.push('/account');
+        if (data.user?.roles?.some((r: any) => typeof r === 'string' ? r === 'Admin' : (r?.name === 'Admin' || r?.Name === 'Admin'))) {
+          router.push('/admin/dashboard');
+        } else {
+          router.push('/account');
+        }
       } else {
         toast.error(data.message || 'Invalid credentials');
       }

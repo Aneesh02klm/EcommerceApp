@@ -13,5 +13,8 @@ namespace Malieakal.Domain.Entities
         public DateTime? ExpiryDate { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? AssignedToEmail { get; set; }
+        public int? UsageLimit { get; set; }
+        public int TimesUsed { get; set; }
     }
 }

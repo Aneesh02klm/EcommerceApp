@@ -9,6 +9,7 @@ import { CartNavBadge } from '@/components/ui/CartNavBadge';
 import { AppInitializer } from '@/components/ui/AppInitializer';
 import { ToastContainer } from '@/components/ui/Toast';
 import { CompareBar } from '@/components/ui/CompareBar';
+import { HideOnAdmin } from '@/components/ui/HideOnAdmin';
 import { WishlistNavBadge } from '@/components/ui/WishlistNavBadge';
 import { ShoppingBag, User, MapPin, Clock, Phone, Heart, ChevronDown } from 'lucide-react';
 import './globals.css';
@@ -43,6 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${inter.className} bg-gray-50 text-gray-800 flex flex-col min-h-screen`}>
 
         {/* ─── TOP BAR ─────────────────────────────────────────── */}
+        <HideOnAdmin>
         <div className="bg-[#0f172a] hidden md:block">
           <div className="container mx-auto px-6 h-9 flex items-center justify-between">
             <div className="flex items-center gap-6 text-[11px] text-gray-400">
@@ -68,8 +70,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </div>
         </div>
+        </HideOnAdmin>
 
-        {/* ─── MAIN HEADER ──────────────────────────────────────── */}
+        {/* MAIN HEADER ──────────────────────────────────────── */}
+        <HideOnAdmin>
         <header className="bg-white sticky top-0 z-50 shadow-sm">
           <div className="container mx-auto px-6 h-[68px] flex items-center gap-8">
             {/* Logo */}
@@ -158,12 +162,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Suspense>
           </div>
         </header>
+        </HideOnAdmin>
 
         <main className="flex-1 bg-white">
           {children}
         </main>
 
         {/* ─── FOOTER ───────────────────────────────────────────── */}
+        <HideOnAdmin>
         <footer className="bg-[#0B192C] text-gray-400 border-t-4 border-amber-400 pt-16 pb-8">
           <div className="container mx-auto px-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
@@ -263,8 +269,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </div>
         </footer>
-
         <CompareBar />
+        </HideOnAdmin>
         <ToastContainer />
         <AppInitializer />
       </body>

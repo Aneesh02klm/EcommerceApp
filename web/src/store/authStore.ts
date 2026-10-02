@@ -10,6 +10,7 @@ interface User {
   lastName: string;
   email: string;
   phone?: string;
+  avatarUrl?: string;
   roles?: string[];
 }
 

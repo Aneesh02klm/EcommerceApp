@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Malieakal.Api.Controllers
 {
@@ -70,7 +71,7 @@ namespace Malieakal.Api.Controllers
             { 
                 success = true, 
                 token, 
-                user = new { user.Id, user.FirstName, user.LastName, user.Email, Roles = user.Roles } 
+                user = new { user.Id, user.FirstName, user.LastName, user.Email, Roles = user.Roles.Select(r => r.Name) } 
             });
         }
 
