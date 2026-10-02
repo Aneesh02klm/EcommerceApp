@@ -147,6 +147,20 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
+
+using (var scope = app.Services.CreateScope())
+{
+    var connectionFactory = scope.ServiceProvider.GetRequiredService<Malieakal.Application.Abstractions.IDbConnectionFactory>();
+    using var connection = connectionFactory.CreateConnection();
+    var sql = @"
+        INSERT INTO UserRoles (UserId, RoleId)
+        SELECT u.Id, r.Id FROM Users u, Roles r 
+        WHERE u.Email = 'admin@ecommerce.com' AND r.Name = 'Admin'
+        ON CONFLICT DO NOTHING;
+    ";
+    Dapper.SqlMapper.Execute(connection, sql);
+}
+
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope()) {

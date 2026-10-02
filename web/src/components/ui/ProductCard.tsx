@@ -27,9 +27,10 @@ interface ProductCardProps {
   stock?: number;
   categorySlug?: string;
   brandSlug?: string;
+  layout?: 'grid' | 'list';
 }
 
-export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageurl, rating = 4.5, brand, stock = 1, categorySlug, brandSlug }: ProductCardProps) {
+export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageurl, rating = 4.5, brand, stock = 1, categorySlug, brandSlug, layout = 'grid' }: ProductCardProps) {
   const addItem = useCartStore(s => s.addItem);
   const { addItem: addToCompare, removeItem: removeFromCompare, isComparing, items: compareItems } = useCompareStore();
   const token = useAuthStore(s => s.token);
@@ -86,9 +87,9 @@ export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageur
   };
 
     return (
-    <div className="group relative flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 h-full">
+    <div className={`group relative flex bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 h-full ${layout === 'list' ? 'flex-col sm:flex-row' : 'flex-col'}`}>
       {/* Image Area */}
-      <div className="relative bg-[#f4f4f4] pt-8 pb-8 px-4 flex items-center justify-center">
+      <div className={`relative bg-[#f4f4f4] pt-8 pb-8 px-4 flex items-center justify-center ${layout === 'list' ? 'sm:w-2/5 min-w-[200px]' : 'w-full'}`}>
         {/* Top-Left Badge */}
         <div className="absolute top-3 left-3 z-10">
           <span className="bg-[#1a1a1a] text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">

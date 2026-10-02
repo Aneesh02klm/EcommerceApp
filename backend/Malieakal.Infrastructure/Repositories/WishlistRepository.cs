@@ -20,9 +20,12 @@ namespace Malieakal.Infrastructure.Repositories
         {
             using var connection = _connectionFactory.CreateConnection();
             var sql = @"
-                SELECT w.*, p.* 
+                SELECT w.*, p.*, c.Slug as CategorySlug, b.Slug as BrandSlug, b.Name as Brand, 
+                (SELECT ImageUrl FROM ProductImages pi WHERE pi.ProductId = p.Id ORDER BY IsPrimary DESC, DisplayOrder ASC LIMIT 1) as ImageUrl
                 FROM Wishlists w
                 INNER JOIN Products p ON w.ProductId = p.Id
+                LEFT JOIN Categories c ON p.CategoryId = c.Id
+                LEFT JOIN Brands b ON p.BrandId = b.Id
                 WHERE w.UserId = @UserId
                 ORDER BY w.AddedAt DESC";
 
