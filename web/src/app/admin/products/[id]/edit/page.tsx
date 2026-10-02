@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ArrowLeft, Save, Plus, Package, Image as ImageIcon, Layers, Bot, Sparkles } from 'lucide-react';
+import { SmartImageUpload } from '@/components/ui/SmartImageUpload';
+import { ArrowLeft, Save, Plus, Package, Image as ImageIcon, Layers, Bot, Sparkles, Trash2 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
 import { Loader2 } from 'lucide-react';
@@ -35,9 +36,11 @@ export default function EditProductPage() {
   const [specDefinitions, setSpecDefinitions] = useState<any[]>([]);
   const [specValues, setSpecValues] = useState<Record<number, string>>({});
   const [images, setImages] = useState<string[]>(['']);
+  const [imageFiles, setImageFiles] = useState<(File|null)[]>([null]);
 
   const [variants, setVariants] = useState([{ name: '', attributesJSON: '{}', additionalPrice: 0, stock: 0 }]);
   const [richMedia, setRichMedia] = useState([{ type: 'Image', mediaUrl: '', title: '', description: '', displayOrder: 0 }]);
+  const [richMediaFiles, setRichMediaFiles] = useState<(File|null)[]>([]);
 
 
   
@@ -66,6 +69,7 @@ export default function EditProductPage() {
           
           if (p.images && p.images.length > 0) {
             setImages(p.images.map((i: any) => i.imageUrl));
+            setImageFiles(p.images.map(() => null));
           }
           
           if (p.variants && p.variants.length > 0) {
@@ -226,19 +230,28 @@ export default function EditProductPage() {
       ...formData,
       finalPrice,
       specificationJson: JSON.stringify(groupedSpecs),
+      
       images: formattedImages,
       variants: formattedVariants,
       richMedia: formattedRichMedia
     };
 
+    const fd = new FormData();
+    fd.append('productData', JSON.stringify(payload));
+    imageFiles.forEach((file: any, i: number) => {
+        if (file) fd.append(`primary_${i}`, file);
+    });
+    richMediaFiles.forEach((file: any, i: number) => {
+        if (file) fd.append(`richMedia_${i}`, file);
+    });
+
     try {
-      const res = await fetch(`${API}/api/v1/products`, {
-        method: 'POST',
+      const res = await fetch(`${API}/api/v1/products/${productId}`, {
+        method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(payload)
+        body: fd
       });
       const data = await res.json();
       
@@ -379,32 +392,33 @@ export default function EditProductPage() {
           <Card className="shadow-sm border-gray-200">
             <CardHeader className="bg-gray-50 border-b border-gray-200 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold text-[#0B192C]">Images</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={() => setImages([...images, ''])} className="h-8 px-2 text-xs font-bold">
+              <Button type="button" variant="outline" size="sm" onClick={() => { setImages([...images, '']); setImageFiles([...imageFiles, null]); }} className="h-8 px-2 text-xs font-bold">
                 <Plus size={14} className="mr-1" /> Add Image
               </Button>
             </CardHeader>
-            <CardContent className="p-6 space-y-3">
-              {images.map((img, idx) => (
-                <div key={idx} className="flex items-center space-x-3">
-                  <span className="text-xs font-extrabold text-gray-400 w-16">{idx === 0 ? 'Primary' : `Image ${idx+1}`}</span>
-                  <input 
-                    type="url" 
-                    placeholder="https://..."
-                    value={img} 
-                    onChange={(e) => {
-                      const newImages = [...images];
-                      newImages[idx] = e.target.value;
-                      setImages(newImages);
-                    }} 
-                    className="flex-1 p-2 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" 
-                  />
-                  {idx > 0 && (
-                    <button type="button" onClick={() => setImages(images.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-600">
-                      &times;
-                    </button>
-                  )}
-                </div>
-              ))}
+            <CardContent className="p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {images.map((img, i) => (
+                  <div key={i} className="relative">
+                    <SmartImageUpload 
+                       initialUrl={img} 
+                       onFileSelect={(f) => { 
+                          const newF = [...imageFiles]; newF[i] = f; setImageFiles(newF); 
+                          if (!f) { const nI = [...images]; nI[i] = ''; setImages(nI); }
+                       }} 
+                       aspectRatio={1} 
+                       label={i === 0 ? "Primary Image" : "Gallery Image"} 
+                    />
+                    {i > 0 && (
+                        <button type="button" onClick={() => {
+                            const newI = images.filter((_, idx) => idx !== i);
+                            const newF = imageFiles.filter((_, idx) => idx !== i);
+                            setImages(newI); setImageFiles(newF);
+                        }} className="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow text-red-500 hover:text-red-700 z-10"><Trash2 size={14}/></button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
           
@@ -521,25 +535,37 @@ export default function EditProductPage() {
                 <ImageIcon size={18} className="mr-2 text-amber-500" /> 
                 A+ Content / Description Images
               </CardTitle>
-              <button type="button" onClick={() => setRichMedia([...richMedia, { type: 'Image', mediaUrl: '', title: '', description: '', displayOrder: richMedia.length }])} className="text-xs font-bold text-amber-600 uppercase tracking-widest flex items-center"><Plus size={14} className="mr-1"/> Add Media</button>
+              <button type="button" onClick={() => { setRichMedia([...richMedia, { type: 'Image', mediaUrl: '', title: '', description: '', displayOrder: richMedia.length }]); setRichMediaFiles([...richMediaFiles, null]); }} className="text-xs font-bold text-amber-600 uppercase tracking-widest flex items-center"><Plus size={14} className="mr-1"/> Add Media</button>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               {richMedia.map((rm, i) => (
-                <div key={i} className="space-y-3 border-b border-gray-100 pb-4">
-                  <div>
-                    <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Image URL</label>
-                    <input type="text" value={rm.mediaUrl} onChange={e => { const nm = [...richMedia]; nm[i].mediaUrl = e.target.value; setRichMedia(nm); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" placeholder="https://..." />
+                <div key={i} className="flex gap-4 border-b border-gray-100 pb-4 relative">
+                  <div className="w-48 flex-shrink-0">
+                    <SmartImageUpload 
+                       initialUrl={rm.mediaUrl}
+                       onFileSelect={(f) => { 
+                          const newF = [...richMediaFiles]; newF[i] = f; setRichMediaFiles(newF); 
+                          if (!f) { const nrm = [...richMedia]; nrm[i].mediaUrl = ''; setRichMedia(nrm); }
+                       }}
+                       aspectRatio={16/9}
+                       label="A+ Banner (16:9)"
+                    />
                   </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
+                  <div className="flex-1 space-y-3">
+                    <div>
                       <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Title (Optional)</label>
-                      <input type="text" value={rm.title} onChange={e => { const nm = [...richMedia]; nm[i].title = e.target.value; setRichMedia(nm); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
+                      <input type="text" value={rm.title || ''} onChange={e => { const nm = [...richMedia]; nm[i].title = e.target.value; setRichMedia(nm); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
                     </div>
-                    <div className="flex-1">
+                    <div>
                       <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Description (Optional)</label>
-                      <input type="text" value={rm.description} onChange={e => { const nm = [...richMedia]; nm[i].description = e.target.value; setRichMedia(nm); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
+                      <input type="text" value={rm.description || ''} onChange={e => { const nm = [...richMedia]; nm[i].description = e.target.value; setRichMedia(nm); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
                     </div>
                   </div>
+                  <button type="button" onClick={() => {
+                        const newR = richMedia.filter((_, idx) => idx !== i);
+                        const newF = richMediaFiles.filter((_, idx) => idx !== i);
+                        setRichMedia(newR); setRichMediaFiles(newF);
+                  }} className="absolute top-0 right-0 bg-white rounded-full p-1.5 shadow text-red-500 hover:text-red-700 z-10"><Trash2 size={14}/></button>
                 </div>
               ))}
             </CardContent>

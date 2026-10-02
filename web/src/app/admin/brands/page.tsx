@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
-import { Loader2, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { SmartImageUpload } from '@/components/ui/SmartImageUpload';
 import { Button } from '@/components/ui/Button';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
@@ -23,6 +24,7 @@ export default function AdminBrandsPage() {
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   
   const [formData, setFormData] = useState({ name: '', slug: '', logoUrl: '' });
+  const [iconFile, setIconFile] = useState<File | null>(null);
 
   useEffect(() => {
     fetchBrands();
@@ -44,9 +46,11 @@ export default function AdminBrandsPage() {
     if (b) {
       setEditingBrand(b);
       setFormData({ name: b.name, slug: b.slug, logoUrl: b.logoUrl || '' });
+      setIconFile(null);
     } else {
       setEditingBrand(null);
       setFormData({ name: '', slug: '', logoUrl: '' });
+      setIconFile(null);
     }
     setIsModalOpen(true);
   };
@@ -59,13 +63,16 @@ export default function AdminBrandsPage() {
       const url = editingBrand ? `${API}/api/v1/brands/${editingBrand.id}` : `${API}/api/v1/brands`;
       const method = editingBrand ? 'PUT' : 'POST';
       
+      const fd = new FormData();
+      fd.append('brandData', JSON.stringify(formData));
+      if (iconFile) fd.append('brandIcon', iconFile);
+
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: fd
       });
       
       const json = await res.json();
@@ -148,7 +155,7 @@ export default function AdminBrandsPage() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
             <div className="flex justify-between items-center p-5 border-b border-gray-100">
               <h2 className="text-lg font-extrabold text-[#0B192C]">{editingBrand ? 'Edit Brand' : 'New Brand'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400">âœ•</button>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
@@ -160,8 +167,15 @@ export default function AdminBrandsPage() {
                 <input required value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} className="w-full border border-gray-200 rounded p-2 text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Logo URL</label>
-                <input value={formData.logoUrl} onChange={e => setFormData({...formData, logoUrl: e.target.value})} className="w-full border border-gray-200 rounded p-2 text-sm" />
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">BRAND ICON</label>
+                <div className="w-32">
+                   <SmartImageUpload 
+                      initialUrl={formData.logoUrl} 
+                      onFileSelect={(f) => setIconFile(f)} 
+                      aspectRatio={1} 
+                      label="Upload Icon" 
+                   />
+                </div>
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>

@@ -10,5 +10,6 @@ namespace Malieakal.Application.Abstractions
         Task<Brand?> GetByIdAsync(int id);
         Task<int> CreateAsync(Brand brand);
         Task UpdateAsync(Brand brand);
+        Task DeleteAsync(int id);
     }
 }

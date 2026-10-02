@@ -151,6 +151,25 @@ namespace Malieakal.Infrastructure.Repositories
             }
         }
 
+        
+        public async Task DeleteAsync(Guid id)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var tx = connection.BeginTransaction();
+            try {
+                await connection.ExecuteAsync("DELETE FROM ProductImages WHERE ProductId = @Id", new { Id = id }, tx);
+                await connection.ExecuteAsync("DELETE FROM ProductSpecifications WHERE ProductId = @Id", new { Id = id }, tx);
+                await connection.ExecuteAsync("DELETE FROM ProductVariants WHERE ProductId = @Id", new { Id = id }, tx);
+                await connection.ExecuteAsync("DELETE FROM ProductRichMedia WHERE ProductId = @Id", new { Id = id }, tx);
+                await connection.ExecuteAsync("DELETE FROM Products WHERE Id = @Id", new { Id = id }, tx);
+                tx.Commit();
+            } catch {
+                tx.Rollback();
+                throw;
+            }
+        }
+
         public async Task<IEnumerable<Product>> SearchAsync(Malieakal.Application.Models.ProductSearchQuery query)
         {
             using var connection = _connectionFactory.CreateConnection();

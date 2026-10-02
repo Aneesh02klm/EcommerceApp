@@ -47,5 +47,12 @@ namespace Malieakal.Infrastructure.Repositories
                 WHERE Id = @Id;";
             await connection.ExecuteAsync(sql, brand);
         }
+    
+        public async Task DeleteAsync(int id)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            var sql = "DELETE FROM Brands WHERE Id = @Id;";
+            await connection.ExecuteAsync(sql, new { Id = id });
+        }
     }
 }
