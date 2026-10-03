@@ -10,7 +10,6 @@ namespace Malieakal.Api.Controllers
 {
     [ApiController]
     [Route("api/v1/[controller]")]
-    [Authorize]
     public class ReviewsController : ControllerBase
     {
         private readonly IDbConnectionFactory _db;
@@ -29,7 +28,27 @@ namespace Malieakal.Api.Controllers
             public string Comment { get; set; } = string.Empty;
         }
 
+        [HttpGet("{productId}")]
+        public async Task<IActionResult> GetReviews(Guid productId)
+        {
+            using var connection = _db.CreateConnection();
+            var sql = @"
+                SELECT pr.*, u.FirstName, u.LastName 
+                FROM ProductReviews pr
+                LEFT JOIN Users u ON pr.UserId = u.Id
+                WHERE pr.ProductId = @ProductId
+                ORDER BY pr.CreatedAt DESC";
+            
+            try {
+                var reviews = await connection.QueryAsync(sql, new { ProductId = productId });
+                return Ok(new { success = true, data = reviews });
+            } catch {
+                return Ok(new { success = true, data = new object[] {} });
+            }
+        }
+
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> SubmitReview([FromBody] ReviewDto dto)
         {
             var userId = GetUserId();
@@ -43,7 +62,7 @@ namespace Malieakal.Api.Controllers
                     UserId UUID REFERENCES Users(Id), 
                     Rating INT NOT NULL CHECK (Rating >= 1 AND Rating <= 5), 
                     Comment TEXT, 
-                    CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );";
             await connection.ExecuteAsync(createSql);
 

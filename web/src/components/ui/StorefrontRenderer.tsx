@@ -134,9 +134,10 @@ export function StorefrontRenderer({ initialConfig, banners, API, mapProductPayl
                 categorySlug: mapProductPayload?.allCategories?.find((c: any) => c.id === p.categoryId)?.slug || 'products',
                 imageUrl: p.imageUrl,
                 mrp: p.mrp || 0,
-                finalPrice,
-                discountPercentage: p.isActiveDiscount ? p.discountPercentage : 0,
+                finalPrice: p.finalPrice ?? finalPrice,
+                discount: p.discount ?? (p.isActiveDiscount ? p.discountPercentage : 0),
                 stock: p.stock || 0,
+                  isBestSeller: p.isBestSeller || p.IsBestSeller || false,
                 ribbon,
                 isMapped: true
             };

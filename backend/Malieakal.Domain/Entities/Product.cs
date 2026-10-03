@@ -26,6 +26,7 @@ namespace Malieakal.Domain.Entities
         public string? Features { get; set; }
         public string? Highlights { get; set; }
         public bool IsActive { get; set; } = true;
+        public bool IsBestSeller { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

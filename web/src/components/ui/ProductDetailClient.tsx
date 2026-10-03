@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
 import { Star, Truck, ShieldCheck, ChevronRight, Check, MapPin, MapPinIcon } from 'lucide-react';
 import { ProductGallery } from '@/components/ui/ProductGallery';
@@ -14,6 +15,7 @@ export function ProductDetailClient({ product, category, brand, specifications, 
   const [pincode, setPincode] = useState('');
   const [deliveryInfo, setDeliveryInfo] = useState<string | null>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
+  const { token } = useAuthStore();
 
   // Update Recently Viewed in Local Storage
   useEffect(() => {
@@ -409,12 +411,13 @@ export function ProductDetailClient({ product, category, brand, specifications, 
                 })()}
               </div>
             )}
-            {activeTab === 'reviews' && (
-              <div className="text-center py-12">
-                <Star className="mx-auto mb-4 text-gray-200" size={48} />
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Reviews Coming Soon</p>
-              </div>
-            )}
+            
+              {activeTab === 'reviews' && (
+                <div className="space-y-8">
+                  <ProductReviews productId={product.id} token={token} />
+                </div>
+              )}
+
           </div>
         </div>
 
@@ -446,6 +449,104 @@ export function ProductDetailClient({ product, category, brand, specifications, 
             product={{...product, finalPrice: activePrice, mrp: activeMrp, stock: activeStock, variantId: selectedVariant?.id}} 
           />
         </div>
+      </div>
+    </div>
+  );
+}
+
+
+function ProductReviews({ productId, token }: { productId: string, token: string | null }) {
+  const [reviews, setReviews] = React.useState<any[]>([]);
+  const [rating, setRating] = React.useState(5);
+  const [comment, setComment] = React.useState('');
+  const [loading, setLoading] = React.useState(true);
+  const [submitting, setSubmitting] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch(process.env.NEXT_PUBLIC_API_URL + '/api/v1/reviews/' + productId)
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) setReviews(json.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [productId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) return alert('Please login to submit a review');
+    if (!comment.trim()) return alert('Please write a comment');
+    
+    setSubmitting(true);
+    try {
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/v1/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ productId, rating, comment })
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert('Review submitted successfully');
+        setComment('');
+        setRating(5);
+        // Refresh reviews
+        const refresh = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/v1/reviews/' + productId);
+        const refJson = await refresh.json();
+        if (refJson.success) setReviews(refJson.data);
+      } else {
+        alert(json.message || 'Failed to submit review');
+      }
+    } catch {
+      alert('Error submitting review');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="md:col-span-2 space-y-6">
+        <h3 className="text-sm font-black text-[#0B192C] uppercase tracking-widest border-b border-gray-100 pb-4">Customer Reviews</h3>
+        {loading ? <p className="text-sm text-gray-500">Loading reviews...</p> : reviews.length === 0 ? <p className="text-sm text-gray-500">No reviews yet. Be the first to review this product!</p> : (
+          <div className="space-y-6">
+            {reviews.map(r => (
+              <div key={r.id} className="border-b border-gray-100 pb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex text-amber-400">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className={`w-3 h-3 ${i < r.rating ? 'fill-current' : 'fill-gray-200'}`} viewBox="0 0 24 24"><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.62L12 2L9.19 8.62L2 9.24L7.45 13.97L5.82 21L12 17.27Z"/></svg>
+                    ))}
+                  </div>
+                  <span className="text-xs font-bold text-gray-900">{r.firstName} {r.lastName}</span>
+                  <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider ml-auto">{new Date(r.createdAt).toLocaleDateString()}</span>
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed">{r.comment}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 h-fit">
+        <h3 className="text-sm font-black text-[#0B192C] uppercase tracking-widest mb-6">Write a Review</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Rating</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map(star => (
+                <button type="button" key={star} onClick={() => setRating(star)} className="focus:outline-none">
+                  <svg className={`w-6 h-6 ${star <= rating ? 'fill-amber-400' : 'fill-gray-200 hover:fill-amber-200 transition-colors'}`} viewBox="0 0 24 24"><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.62L12 2L9.19 8.62L2 9.24L7.45 13.97L5.82 21L12 17.27Z"/></svg>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Review</label>
+            <textarea required value={comment} onChange={e => setComment(e.target.value)} rows={4} className="w-full text-sm border-gray-200 rounded-lg p-3 focus:ring-1 focus:ring-[#0B192C] focus:border-[#0B192C] transition-all" placeholder="Share your experience..."></textarea>
+          </div>
+          <button type="submit" disabled={submitting} className="w-full bg-[#0B192C] hover:bg-[#1a2d4c] text-white text-[10px] font-bold uppercase tracking-widest py-3 rounded shadow transition-colors disabled:opacity-50">
+            {submitting ? 'Submitting...' : 'Submit Review'}
+          </button>
+        </form>
       </div>
     </div>
   );

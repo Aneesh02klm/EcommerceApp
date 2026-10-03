@@ -95,6 +95,7 @@ using (var scope = app.Services.CreateScope())
               "Database/119_FinalSeed.sql",
               "Database/120_DiscoverMore.sql",
               "Database/121_AutomatedGrids.sql",
+              "Database/123_AddIsBestSeller.sql",
               "Database/122_DraftPublish.sql",
             "Database/116_CouponUsageLimit.sql",
             "Database/108_AddVariantIdToCartItems.sql",

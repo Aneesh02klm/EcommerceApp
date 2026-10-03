@@ -57,6 +57,19 @@ namespace Malieakal.Api.Controllers
                     Message = "Your order " + order.OrderNumber + " is now " + request.Status + ".",
                     LinkUrl = "/account/orders/" + order.Id
                 });
+
+                if (request.Status.Equals("Delivered", StringComparison.OrdinalIgnoreCase) && order.Items != null && order.Items.Count > 0)
+                {
+                    var firstItem = order.Items[0];
+                    await _notificationRepository.AddNotificationAsync(new Malieakal.Domain.Entities.Notification
+                    {
+                        UserId = order.UserId,
+                        Role = "Customer",
+                        Title = "Leave a Review",
+                        Message = "Your order has been delivered! Please leave a review for " + firstItem.ProductName + ".",
+                        LinkUrl = "/product/shop/" + firstItem.ProductSlug + "#reviews"
+                    });
+                }
             }
 
             return Ok(new { success = true, message = "Order status updated successfully." });

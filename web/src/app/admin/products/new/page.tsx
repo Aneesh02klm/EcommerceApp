@@ -51,7 +51,8 @@ export default function CreateProductPage() {
     description: '',
     features: '',
     highlights: '',
-    isActive: true
+    isActive: true,
+    isBestSeller: false
   });
 
   useEffect(() => {
@@ -530,6 +531,17 @@ export default function CreateProductPage() {
                   <option value="false">Hidden (Draft)</option>
                 </select>
               </div>
+              <div className="flex items-center gap-3 mt-6">
+                <input 
+                  type="checkbox" 
+                  id="isBestSeller" 
+                  checked={formData.isBestSeller || false} 
+                  onChange={(e) => setFormData({...formData, isBestSeller: e.target.checked})}
+                  className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 border-gray-300"
+                />
+                <label htmlFor="isBestSeller" className="text-sm font-bold text-[#0B192C]">Mark as Best Seller</label>
+              </div>
+
             </CardContent>
           </Card>
 

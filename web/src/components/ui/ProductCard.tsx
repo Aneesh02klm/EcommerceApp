@@ -19,18 +19,22 @@ interface ProductCardProps {
   name: string;
   slug: string;
   mrp: number;
-  finalprice: number;
+  finalPrice?: number; 
+  finalprice?: number;
   discount: number;
+  imageUrl?: string; 
   imageurl?: string;
   rating?: number;
   brand?: string;
   stock?: number;
   categorySlug?: string;
   brandSlug?: string;
+  isBestSeller?: boolean;
+  isbestseller?: boolean;
   layout?: 'grid' | 'list';
 }
 
-export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageurl, rating = 4.5, brand, stock = 1, categorySlug, brandSlug, layout = 'grid' }: ProductCardProps) {
+export function ProductCard({ id, name, slug, mrp, finalPrice, finalprice, discount, imageUrl, imageurl, rating = 4.5, brand, stock = 1, categorySlug, brandSlug, layout = 'grid', isBestSeller, isbestseller }: ProductCardProps) {
   const addItem = useCartStore(s => s.addItem);
   const { addItem: addToCompare, removeItem: removeFromCompare, isComparing, items: compareItems } = useCompareStore();
   const token = useAuthStore(s => s.token);
@@ -38,7 +42,9 @@ export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageur
   const wishlisted = isInWishlist(id);
   const [adding, setAdding] = useState(false);
 
-  const saveAmount = Math.max(0, mrp - finalprice);
+  const price = finalPrice ?? finalprice ?? 0;
+  const img = imageUrl ?? imageurl;
+  const saveAmount = Math.max(0, mrp - price);
   const comparing = isComparing(id);
   const compareIsFull = compareItems.length >= MAX_COMPARE && !comparing;
 
@@ -74,30 +80,18 @@ export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageur
     }
   };
 
-  const handleCompare = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      if (compareIsFull) {
-        toast.error(`You can compare up to ${MAX_COMPARE} products at a time.`);
-        return;
-      }
-      addToCompare({ id, name, slug, brandSlug, brand, finalprice, mrp, discount, imageurl, stock, categorySlug });
-    } else {
-      removeFromCompare(id);
-    }
-  };
-
-    return (
+  return (
     <div className={`group relative flex bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 h-full ${layout === 'list' ? 'flex-col sm:flex-row' : 'flex-col'}`}>
       {/* Image Area */}
       <div className={`relative bg-[#f4f4f4] pt-8 pb-8 px-4 flex items-center justify-center ${layout === 'list' ? 'sm:w-2/5 min-w-[200px]' : 'w-full'}`}>
-        {/* Top-Left Badge */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className="bg-[#1a1a1a] text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">
-            BEST SELLER
-          </span>
-        </div>
+        {(isBestSeller || isbestseller) && (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="bg-[#1a1a1a] text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">
+              BEST SELLER
+            </span>
+          </div>
+        )}
         
-        {/* Top-Right Badge */}
         {discount > 0 && (
           <div className="absolute top-3 right-3 z-10">
             <span className="bg-[#1a8b44] text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">
@@ -106,7 +100,6 @@ export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageur
           </div>
         )}
 
-        {/* Floating Actions (Bottom-Right of Image) */}
         <div className="absolute bottom-3 right-3 flex flex-col gap-2 z-20">
           <button
             onClick={handleWishlist}
@@ -120,7 +113,7 @@ export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageur
               e.preventDefault();
               e.stopPropagation();
               if (comparing) removeFromCompare(id);
-              else addToCompare({ id, name, slug, brandSlug, brand, finalprice, mrp, discount, imageurl, stock, categorySlug });
+              else addToCompare({ id, name, slug, brandSlug, brand, finalprice: price, mrp, discount, imageurl: img, stock, categorySlug });
             }}
             className={`w-8 h-8 rounded-full flex items-center justify-center shadow transition-all ${comparing ? 'bg-amber-100 text-amber-600' : 'bg-white text-gray-500 hover:text-gray-900'}`}
             aria-label="Compare"
@@ -129,10 +122,9 @@ export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageur
           </button>
         </div>
 
-        {/* Product Image */}
         <Link href={productUrl} className="block relative h-48 w-full flex items-center justify-center mix-blend-multiply">
-          {imageurl ? (
-            <img src={`${API_URL}${imageurl}`} alt={name} className="max-h-full max-w-[85%] object-contain group-hover:scale-105 transition-transform duration-500" />
+          {img ? (
+            <img src={`${API_URL}${img}`} alt={name} className="max-h-full max-w-[85%] object-contain group-hover:scale-105 transition-transform duration-500" />
           ) : (
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-[10px] font-bold uppercase tracking-widest">No Image</div>
           )}
@@ -151,21 +143,12 @@ export function ProductCard({ id, name, slug, mrp, finalprice, discount, imageur
 
         <span className="text-[10px] text-gray-500 mb-2 block truncate">Model: {slug.split('-')[0].toUpperCase()}</span>
 
-        <div className="flex items-center gap-1 mb-4">
-          <div className="flex text-amber-400">
-            <Star size={10} className="fill-amber-400" />
-            <Star size={10} className="fill-amber-400" />
-            <Star size={10} className="fill-amber-400" />
-            <Star size={10} className="fill-amber-400" />
-            <Star size={10} className="fill-gray-200 text-gray-200" />
-          </div>
-          <span className="text-[10px] font-bold text-gray-700 ml-1">4.7</span>
-        </div>
+        {/* REVIEWS REMOVED AS REQUESTED */}
 
         <div className="mt-auto">
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-lg font-black text-gray-900 tracking-tight">{formatCurrency(finalprice)}</span>
-            {discount > 0 && <span className="text-[11px] text-gray-400 line-through font-medium tracking-tight">MRP {formatCurrency(mrp)}</span>}
+            <span className="text-lg font-black text-gray-900 tracking-tight">{formatCurrency(price)}</span>
+            {discount > 0 && <del className="text-[11px] text-gray-400 font-medium tracking-tight">MRP {formatCurrency(mrp)}</del>}
           </div>
           <div className="min-h-[16px] mb-4">
             {saveAmount > 0 && (

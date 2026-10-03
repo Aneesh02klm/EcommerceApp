@@ -73,8 +73,8 @@ namespace Malieakal.Infrastructure.Repositories
             try
             {
                 var sql = @"
-                    INSERT INTO Products (Id, CategoryId, SubcategoryId, BrandId, Name, Slug, SKU, Model, MRP, Discount, FinalPrice, Stock, Description, Features, Highlights, IsActive, CreatedAt, UpdatedAt, SpecificationJson)
-                    VALUES (@Id, @CategoryId, @SubcategoryId, @BrandId, @Name, @Slug, @SKU, @Model, @MRP, @Discount, @FinalPrice, @Stock, @Description, @Features, @Highlights, @IsActive, @CreatedAt, @UpdatedAt, @SpecificationJson::jsonb);";
+                    INSERT INTO Products (Id, CategoryId, SubcategoryId, BrandId, Name, Slug, SKU, Model, MRP, Discount, FinalPrice, Stock, Description, Features, Highlights, IsActive, IsBestSeller, CreatedAt, UpdatedAt, SpecificationJson)
+                    VALUES (@Id, @CategoryId, @SubcategoryId, @BrandId, @Name, @Slug, @SKU, @Model, @MRP, @Discount, @FinalPrice, @Stock, @Description, @Features, @Highlights, @IsActive, @IsBestSeller, @CreatedAt, @UpdatedAt, @SpecificationJson::jsonb);";
                 await connection.ExecuteAsync(sql, product, transaction);
 
                 if (product.Images != null && product.Images.Any())
@@ -120,7 +120,7 @@ namespace Malieakal.Infrastructure.Repositories
                     SET CategoryId = @CategoryId, SubcategoryId = @SubcategoryId, BrandId = @BrandId, Name = @Name, 
                         Slug = @Slug, SKU = @SKU, Model = @Model, MRP = @MRP, Discount = @Discount, FinalPrice = @FinalPrice, 
                         Stock = @Stock, Description = @Description, Features = @Features, Highlights = @Highlights, 
-                        IsActive = @IsActive, UpdatedAt = @UpdatedAt, SpecificationJson = @SpecificationJson::jsonb
+                        IsActive = @IsActive, IsBestSeller = @IsBestSeller, UpdatedAt = @UpdatedAt, SpecificationJson = @SpecificationJson::jsonb
                     WHERE Id = @Id;";
                 await connection.ExecuteAsync(sql, product, transaction);
 
