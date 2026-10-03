@@ -8,7 +8,7 @@ import { Loader2, Tag, CheckCircle2, XCircle } from 'lucide-react';
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
 export function PromoCodeInput() {
-  const { promoCode, promoDiscount, setPromo, removePromo, finalTotal } = useCartStore();
+  const { promoCode, promoDiscount, setPromo, addPromo, removePromo, finalTotal, appliedCoupons = [] } = useCartStore();
   const [inputCode, setInputCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
@@ -37,7 +37,11 @@ export function PromoCodeInput() {
     if (!code.trim()) return;
     try {
       setIsLoading(true);
-      const res = await fetch(`${API}/api/v1/coupons/${code}`);
+      const res = await fetch(`${API}/api/v1/coupons/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, existingCodes: appliedCoupons.map(c => c.code) })
+      });
       const json = await res.json();
       
       if (!res.ok || !json.success) {
@@ -49,6 +53,11 @@ export function PromoCodeInput() {
       if (finalTotal < coupon.minOrderAmount) {
         toast.error(`Minimum order amount for this coupon is ₹${coupon.minOrderAmount}`);
         return;
+      }
+
+      if (appliedCoupons.some(c => c.code === coupon.code)) {
+           toast.error('Coupon is already applied.');
+           return;
       }
 
       let discount = 0;
@@ -63,7 +72,7 @@ export function PromoCodeInput() {
 
       if (discount > finalTotal) discount = finalTotal;
 
-      setPromo(coupon.code, discount);
+      addPromo({ code: coupon.code, discountAmount: discount, cannotBeCombined: coupon.cannotBeCombined || false });
       setInputCode('');
       toast.success(`Coupon ${coupon.code} applied successfully!`);
     } catch (err: any) {
@@ -77,25 +86,34 @@ export function PromoCodeInput() {
 
   return (
     <div className="space-y-4 mb-6">
-      {promoCode ? (
-        <div className="bg-green-50 border border-green-200 p-3 rounded-lg flex justify-between items-center">
-          <div className="flex items-center text-green-700">
-            <CheckCircle2 size={16} className="mr-2 flex-shrink-0" />
-            <span className="text-xs font-bold uppercase tracking-wider">
-              {promoCode} Applied
-              {appliedCoupon && (
-                <span className="lowercase block mt-0.5 text-[10px] text-green-600 font-semibold tracking-normal">
-                  {appliedCoupon.discountType === 'Percentage' ? `${appliedCoupon.discountValue}% OFF` : `Flat ₹${appliedCoupon.discountValue} OFF`}
-                  {appliedCoupon.maxDiscountAmount ? ` (Up to ₹${appliedCoupon.maxDiscountAmount})` : ''}
-                </span>
-              )}
-            </span>
-          </div>
-          <button onClick={() => removePromo()} className="text-gray-400 hover:text-red-500 transition-colors ml-2">
-            <XCircle size={16} />
-          </button>
+      {appliedCoupons.length > 0 && (
+        <div className="space-y-2 mb-4">
+          {appliedCoupons.map(c => {
+             const appliedCoupon = availableCoupons.find(ac => ac.code === c.code);
+             return (
+               <div key={c.code} className="bg-green-50 border border-green-200 p-3 rounded-lg flex justify-between items-center">
+                 <div className="flex items-center text-green-700">
+                   <CheckCircle2 size={16} className="mr-2 flex-shrink-0" />
+                   <span className="text-xs font-bold uppercase tracking-wider">
+                     {c.code} Applied
+                     {appliedCoupon && (
+                       <span className="lowercase block mt-0.5 text-[10px] text-green-600 font-semibold tracking-normal">
+                         {appliedCoupon.discountType === 'Percentage' ? `${appliedCoupon.discountValue}% OFF` : `Flat ₹${appliedCoupon.discountValue} OFF`}
+                         {appliedCoupon.maxDiscountAmount ? ` (Up to ₹${appliedCoupon.maxDiscountAmount})` : ''}
+                       </span>
+                     )}
+                   </span>
+                 </div>
+                 <button onClick={() => removePromo(c.code)} className="text-gray-400 hover:text-red-500 transition-colors ml-2">
+                   <XCircle size={16} />
+                 </button>
+               </div>
+             );
+          })}
         </div>
-      ) : (
+      )}
+      
+      {(!appliedCoupons.length || !appliedCoupons.some(c => c.cannotBeCombined)) && (
         <div className="space-y-3">
           <div className="flex gap-2">
             <div className="relative flex-1">

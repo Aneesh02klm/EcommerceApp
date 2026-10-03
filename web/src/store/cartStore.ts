@@ -19,8 +19,9 @@ interface CartState {
   totalMRP: number;
   finalTotal: number;
   discount: number;
-  promoCode: string;
-  promoDiscount: number;
+  appliedCoupons: { code: string, discountAmount: number, cannotBeCombined: boolean }[];
+    promoCode: string;
+    promoDiscount: number;
   
   addItem: (productId: string, quantity?: number) => Promise<void>;
   syncPrices: () => Promise<void>;
@@ -28,7 +29,8 @@ interface CartState {
   removeItem: (productId: string) => void;
   clearCart: () => void;
   setPromo: (code: string, discountAmount: number) => void;
-  removePromo: () => void;
+    addPromo: (coupon: { code: string, discountAmount: number, cannotBeCombined: boolean }) => void;
+    removePromo: (code?: string) => void;
   
   // Backend Auth Sync Methods
   initFromBackend: () => Promise<void>;
@@ -50,6 +52,7 @@ export const useCartStore = create<CartState>()(
       totalMRP: 0,
       finalTotal: 0,
       discount: 0,
+      appliedCoupons: [],
       promoCode: '',
       promoDiscount: 0,
 
@@ -229,7 +232,7 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: () => {
-        set({ items: [], totalMRP: 0, finalTotal: 0, discount: 0, promoCode: '', promoDiscount: 0 });
+        set({ items: [], totalMRP: 0, finalTotal: 0, discount: 0, promoCode: '', promoDiscount: 0, appliedCoupons: [] });
 
         // Sync to backend
         const token = useAuthStore.getState().token;
@@ -247,8 +250,23 @@ export const useCartStore = create<CartState>()(
         set({ promoCode: code, promoDiscount: discountAmount });
       },
 
-      removePromo: () => {
-        set({ promoCode: '', promoDiscount: 0 });
+      addPromo: (coupon: { code: string, discountAmount: number, cannotBeCombined: boolean }) => {
+        const state = get();
+        if (state.appliedCoupons.find(c => c.code === coupon.code)) return;
+        const newCoupons = [...state.appliedCoupons, coupon];
+        const totalDiscount = newCoupons.reduce((sum, c) => sum + c.discountAmount, 0);
+        set({ appliedCoupons: newCoupons, promoCode: newCoupons.map(c => c.code).join(','), promoDiscount: totalDiscount });
+      },
+
+      removePromo: (code?: string) => {
+        if (!code) {
+          set({ promoCode: '', promoDiscount: 0, appliedCoupons: [] });
+          return;
+        }
+        const state = get();
+        const newCoupons = state.appliedCoupons.filter(c => c.code !== code);
+        const totalDiscount = newCoupons.reduce((sum, c) => sum + c.discountAmount, 0);
+        set({ appliedCoupons: newCoupons, promoCode: newCoupons.map(c => c.code).join(','), promoDiscount: totalDiscount });
       }
     }),
     {

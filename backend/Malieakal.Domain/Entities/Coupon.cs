@@ -17,5 +17,7 @@ namespace Malieakal.Domain.Entities
         public int? UsageLimit { get; set; }
         public int? UsageLimitPerUser { get; set; }
         public int TimesUsed { get; set; }
+        public bool CannotBeCombined { get; set; }
+        public string[]? RestrictedCustomerIds { get; set; }
     }
 }

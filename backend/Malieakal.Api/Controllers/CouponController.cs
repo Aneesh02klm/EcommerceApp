@@ -39,6 +39,38 @@ namespace Malieakal.Api.Controllers
             return Ok(new { success = true, data = coupons });
         }
 
+        
+        public class ApplyCouponRequest
+        {
+            public string Code { get; set; } = string.Empty;
+            public string[]? ExistingCodes { get; set; }
+        }
+
+        [HttpPost("apply")]
+        public async Task<IActionResult> ApplyCoupon([FromBody] ApplyCouponRequest request)
+        {
+            var incomingCoupon = await _couponRepository.GetByCodeAsync(request.Code);
+            if (incomingCoupon == null) return NotFound(new { success = false, message = "Invalid or expired coupon code." });
+
+            if (request.ExistingCodes != null && request.ExistingCodes.Length > 0)
+            {
+                if (incomingCoupon.CannotBeCombined)
+                {
+                    return BadRequest(new { success = false, message = "This coupon cannot be combined with other offers in your cart." });
+                }
+
+                foreach (var existingCode in request.ExistingCodes)
+                {
+                    var existingCoupon = await _couponRepository.GetByCodeAsync(existingCode);
+                    if (existingCoupon != null && existingCoupon.CannotBeCombined)
+                    {
+                        return BadRequest(new { success = false, message = "An exclusive offer is already applied to your cart. Remove it to use a different coupon." });
+                    }
+                }
+            }
+            return Ok(new { success = true, data = incomingCoupon });
+        }
+
         [HttpGet("{code}")]
         public async Task<IActionResult> ValidateCoupon(string code)
         {
@@ -69,10 +101,16 @@ namespace Malieakal.Api.Controllers
                 SET Code = @Code, DiscountType = @DiscountType, DiscountValue = @DiscountValue, 
                     MinOrderAmount = @MinOrderAmount, MaxDiscountAmount = @MaxDiscountAmount, 
                     ExpiryDate = @ExpiryDate, IsActive = @IsActive, AssignedToEmail = @AssignedToEmail, 
-                    UsageLimit = @UsageLimit, UsageLimitPerUser = @UsageLimitPerUser
-                WHERE Id = @Id;";
+                    UsageLimit = @UsageLimit, UsageLimitPerUser = @UsageLimitPerUser,
+                      CannotBeCombined = @CannotBeCombined, RestrictedCustomerIds = @RestrictedCustomerIds
+                  WHERE Id = @Id;";
             coupon.Id = id;
-            await connection.ExecuteAsync(sql, coupon);
+            await connection.ExecuteAsync(sql, new {
+                  coupon.Id, coupon.Code, coupon.DiscountType, coupon.DiscountValue, coupon.MinOrderAmount,
+                  coupon.MaxDiscountAmount, coupon.ExpiryDate, coupon.IsActive, coupon.AssignedToEmail,
+                  coupon.UsageLimit, coupon.UsageLimitPerUser, coupon.CannotBeCombined,
+                  RestrictedCustomerIds = coupon.RestrictedCustomerIds
+              });
             return Ok(new { success = true, data = coupon });
         }
 
@@ -92,9 +130,14 @@ namespace Malieakal.Api.Controllers
             coupon.CreatedAt = System.DateTime.UtcNow;
             using var connection = _db.CreateConnection();
             var sql = @"
-                INSERT INTO Coupons (Code, DiscountType, DiscountValue, MinOrderAmount, MaxDiscountAmount, ExpiryDate, IsActive, AssignedToEmail, UsageLimit, UsageLimitPerUser) 
-                VALUES (@Code, @DiscountType, @DiscountValue, @MinOrderAmount, @MaxDiscountAmount, @ExpiryDate, @IsActive, @AssignedToEmail, @UsageLimit, @UsageLimitPerUser) RETURNING Id;";
-            coupon.Id = await connection.ExecuteScalarAsync<int>(sql, coupon);
+                INSERT INTO Coupons (Code, DiscountType, DiscountValue, MinOrderAmount, MaxDiscountAmount, ExpiryDate, IsActive, AssignedToEmail, UsageLimit, UsageLimitPerUser, CannotBeCombined, RestrictedCustomerIds) 
+                  VALUES (@Code, @DiscountType, @DiscountValue, @MinOrderAmount, @MaxDiscountAmount, @ExpiryDate, @IsActive, @AssignedToEmail, @UsageLimit, @UsageLimitPerUser, @CannotBeCombined, @RestrictedCustomerIds) RETURNING Id;";
+            coupon.Id = await connection.ExecuteScalarAsync<int>(sql, new {
+                  coupon.Code, coupon.DiscountType, coupon.DiscountValue, coupon.MinOrderAmount,
+                  coupon.MaxDiscountAmount, coupon.ExpiryDate, coupon.IsActive, coupon.AssignedToEmail,
+                  coupon.UsageLimit, coupon.UsageLimitPerUser, coupon.CannotBeCombined,
+                  RestrictedCustomerIds = coupon.RestrictedCustomerIds
+              });
             return Ok(new { success = true, data = coupon });
         }
     }

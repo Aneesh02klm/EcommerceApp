@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
 import { Search, Loader2, Plus, Mail, Infinity as InfinityIcon, Edit2, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import Select from 'react-select';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
@@ -15,16 +16,26 @@ export default function AdminCouponsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [editingCoupon, setEditingCoupon] = useState<any>(null);
+  const [customers, setCustomers] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     code: '', discountType: 'Percentage', discountValue: 0,
     minOrderAmount: 0, maxDiscountAmount: '', expiryDate: '',
-    isActive: true, assignedToEmail: '', usageLimit: '', usageLimitPerUser: ''
+    isActive: true, assignedToEmail: '', usageLimit: '', usageLimitPerUser: '', cannotBeCombined: false, restrictedCustomerIds: [] as string[]
   });
 
   useEffect(() => {
     fetchCoupons();
+    fetchCustomers();
   }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      const res = await fetch(`${API}/api/v1/admin/customers`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const json = await res.json();
+      if (json.success) setCustomers(json.data);
+    } catch (e) {}
+  };
 
   const fetchCoupons = async () => {
     try {
@@ -69,7 +80,9 @@ export default function AdminCouponsPage() {
       isActive: c.isActive !== undefined ? c.isActive : true,
       assignedToEmail: c.assignedToEmail || '',
       usageLimit: c.usageLimit || '',
-      usageLimitPerUser: c.usageLimitPerUser || ''
+      usageLimitPerUser: c.usageLimitPerUser || '',
+      cannotBeCombined: c.cannotBeCombined || false,
+      restrictedCustomerIds: c.restrictedCustomerIds || []
     });
     setIsModalOpen(true);
   };
@@ -101,7 +114,9 @@ export default function AdminCouponsPage() {
         usageLimit: formData.usageLimit ? parseInt(formData.usageLimit.toString()) : null,
         usageLimitPerUser: formData.usageLimitPerUser ? parseInt(formData.usageLimitPerUser.toString()) : null,
         expiryDate: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : null,
-        assignedToEmail: formData.assignedToEmail || null
+        assignedToEmail: formData.assignedToEmail || null,
+        cannotBeCombined: formData.cannotBeCombined,
+        restrictedCustomerIds: formData.restrictedCustomerIds.length > 0 ? formData.restrictedCustomerIds : null
       };
 
       const url = editingCoupon 
@@ -142,7 +157,7 @@ export default function AdminCouponsPage() {
           <h1 className="text-2xl font-black text-[#0B192C]">Coupons & Discounts</h1>
           <p className="text-sm font-medium text-gray-500">Create targetted marketing codes & walk-in customer discounts.</p>
         </div>
-        <button onClick={() => { setFormData({ code: '', discountType: 'Percentage', discountValue: 0, minOrderAmount: 0, maxDiscountAmount: '', expiryDate: '', isActive: true, assignedToEmail: '', usageLimit: '1', usageLimitPerUser: '' }); setIsModalOpen(true); setEditingCoupon(null); }} className="flex items-center gap-2 bg-[#0B192C] hover:bg-[#162a45] text-white font-bold text-[11px] uppercase tracking-widest px-6 py-3 rounded shadow-sm">
+        <button onClick={() => { setFormData({ code: '', discountType: 'Percentage', discountValue: 0, minOrderAmount: 0, maxDiscountAmount: '', expiryDate: '', isActive: true, assignedToEmail: '', usageLimit: '1', usageLimitPerUser: '', cannotBeCombined: false, restrictedCustomerIds: [] }); setIsModalOpen(true); setEditingCoupon(null); }} className="flex items-center gap-2 bg-[#0B192C] hover:bg-[#162a45] text-white font-bold text-[11px] uppercase tracking-widest px-6 py-3 rounded shadow-sm">
           <Plus size={16} /> GENERATE COUPON
         </button>
       </header>
@@ -178,9 +193,10 @@ export default function AdminCouponsPage() {
                       {c.discountType === 'Percentage' ? `${c.discountValue}%` : `₹${c.discountValue}`}
                     </td>
                     <td className="px-6 py-4">
-                      {c.assignedToEmail ? (
-                        <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded"><Mail size={12}/> {c.assignedToEmail}</span>
+                      {c.restrictedCustomerIds && c.restrictedCustomerIds.length > 0 ? (
+                        <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded"><Mail size={12}/> {c.restrictedCustomerIds.length} Customers</span>
                       ) : <span className="text-gray-400 text-xs">Public</span>}
+                      {c.cannotBeCombined && <span className="ml-2 text-[9px] uppercase font-bold text-red-500 bg-red-50 px-1 py-0.5 rounded">Anti-Stack</span>}
                     </td>
                     <td className="px-6 py-4 text-xs font-medium text-gray-500">
                       {c.timesUsed} / {c.usageLimit || <InfinityIcon size={14} className="inline-block text-gray-400" />}
@@ -261,10 +277,24 @@ export default function AdminCouponsPage() {
 
               <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg space-y-3">
                 <h3 className="text-sm font-extrabold text-blue-900 flex items-center gap-2"><Mail size={16}/> Customer Assignment (Optional)</h3>
-                <p className="text-xs text-blue-700">Restrict this coupon to a specific walk-in customer or loyal user.</p>
+                <p className="text-xs text-blue-700">Restrict this coupon to specific customers.</p>
                 <div>
-                  <input type="email" value={formData.assignedToEmail} onChange={e => setFormData({...formData, assignedToEmail: e.target.value})} className="w-full border border-blue-200 rounded p-2 text-sm outline-none focus:border-blue-400" placeholder="customer@email.com" />
+                  <Select 
+                    isMulti 
+                    options={customers.map(c => ({ value: c.id, label: c.email || c.phone || c.name }))} 
+                    value={formData.restrictedCustomerIds.map(id => {
+                      const c = customers.find(x => x.id === id);
+                      return { value: id, label: c ? (c.email || c.phone || c.name) : id };
+                    })}
+                    onChange={(selected) => setFormData({...formData, restrictedCustomerIds: selected.map((s: any) => s.value)})}
+                    placeholder="Search customers..."
+                    className="text-sm"
+                  />
                 </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <input type="checkbox" id="cannotBeCombined" checked={formData.cannotBeCombined} onChange={e => setFormData({...formData, cannotBeCombined: e.target.checked})} className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 border-gray-300" />
+                <label htmlFor="cannotBeCombined" className="text-sm font-bold text-[#0B192C]">Cannot be combined with other offers</label>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
