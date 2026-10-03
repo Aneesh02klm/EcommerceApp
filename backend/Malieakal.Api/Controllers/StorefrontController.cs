@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Malieakal.Api.Hubs;
 using Microsoft.AspNetCore.Mvc;
+using Dapper;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Malieakal.Application.Abstractions;
@@ -16,10 +17,43 @@ namespace Malieakal.Api.Controllers
     [Route("api/v1/[controller]")]
     public class StorefrontController : ControllerBase
     {
+        private async Task ApplyCatalogPromotions(IEnumerable<Malieakal.Domain.Entities.Product> products)
+        {
+            if (products == null || !products.Any()) return;
+            using var connection = _db.CreateConnection();
+            var activePromos = (await connection.QueryAsync<Malieakal.Domain.Entities.CatalogPromotion>(
+                "SELECT * FROM CatalogPromotions WHERE IsActive = true AND StartDate <= @Now AND EndDate >= @Now",
+                new { Now = System.DateTime.UtcNow })).ToList();
+
+            if (!activePromos.Any()) return;
+
+            foreach (var p in products)
+            {
+                var promo = activePromos.FirstOrDefault(pr => pr.TargetType == "Brand" && pr.TargetId == p.BrandId)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetId == p.CategoryId)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Store");
+
+                if (promo != null)
+                {
+                    decimal promoDiscount = promo.DiscountType == "Percentage" 
+                        ? p.MRP * (promo.DiscountValue / 100m) 
+                        : promo.DiscountValue;
+
+                    decimal newFinalPrice = p.MRP - promoDiscount;
+                    if (newFinalPrice < p.FinalPrice)
+                    {
+                        p.FinalPrice = newFinalPrice;
+                        p.Discount = promo.DiscountValue;
+                    }
+                }
+            }
+        }
+
         private readonly IStorefrontRepository _storefrontRepo;
         private readonly ICategoryRepository _categoryRepo;
         private readonly IBrandRepository _brandRepo;
         private readonly IProductRepository _productRepo;
+        private readonly Malieakal.Application.Abstractions.IDbConnectionFactory _db;
 
         private readonly IHubContext<StorefrontHub> _hubContext;
 
@@ -28,12 +62,13 @@ namespace Malieakal.Api.Controllers
             ICategoryRepository categoryRepo,
             IBrandRepository brandRepo,
             IProductRepository productRepo,
-            IHubContext<StorefrontHub> hubContext)
+            IHubContext<StorefrontHub> hubContext, Malieakal.Application.Abstractions.IDbConnectionFactory db)
         {
             _storefrontRepo = storefrontRepo;
             _categoryRepo = categoryRepo;
             _brandRepo = brandRepo;
             _productRepo = productRepo;
+            _db = db;
             _hubContext = hubContext;
         }
 
@@ -55,7 +90,8 @@ namespace Malieakal.Api.Controllers
 
             var allCategories = await _categoryRepo.GetAllAsync();
             var allBrands = await _brandRepo.GetAllAsync();
-            var allProducts = await _productRepo.GetAllAsync();
+            var allProducts = (await _productRepo.GetAllAsync()).ToList();
+            await ApplyCatalogPromotions(allProducts);
 
             foreach (var section in sectionsArray)
             {

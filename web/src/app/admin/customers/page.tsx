@@ -48,16 +48,8 @@ export default function AdminCustomers() {
               className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-md text-sm w-[320px] focus:outline-none focus:ring-1 focus:ring-[#0B192C]"
             />
           </div>
-          <div className="relative cursor-pointer">
-            <Bell size={20} className="text-gray-600" />
-          </div>
-          <div className="flex items-center gap-3">
-            <img src={user?.avatarUrl || "https://i.pravatar.cc/150?u=admin"} alt="Admin" className="w-9 h-9 rounded-full object-cover" />
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{user?.roles?.join(', ')}</span>
-              <span className="text-sm font-bold text-[#0B192C] leading-none">{user?.firstName} {user?.lastName}</span>
-            </div>
-          </div>
+          
+          
         </div>
       </header>
 

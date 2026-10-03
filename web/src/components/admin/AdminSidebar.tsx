@@ -29,6 +29,7 @@ const menuStructure = [
     children: [
       { name: 'Campaigns', href: '/admin/campaigns' },
       { name: 'Flash Sales', href: '/admin/flash-sales' },
+      { name: 'Catalog Promotions', href: '/admin/catalog-promotions' },
       { name: 'Coupons', href: '/admin/coupons' },
       { name: 'Scratch & Win', href: '/admin/scratch-win' },
       { name: 'Banners', href: '/admin/banners' },

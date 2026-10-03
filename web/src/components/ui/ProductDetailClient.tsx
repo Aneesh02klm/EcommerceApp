@@ -204,14 +204,14 @@ export function ProductDetailClient({ product, category, brand, specifications, 
             <div className="mb-6">
               <div className="flex items-baseline gap-3 mb-1">
                 <span className="text-[40px] font-black text-[#0B192C] tracking-tight">{formatCurrency(activePrice)}</span>
-                {product.discount > 0 && (
-                  <>
-                    <span className="text-lg text-gray-400 line-through font-medium">MRP {formatCurrency(activeMrp)}</span>
-                    <span className="bg-[#128842] text-white text-[13px] font-bold px-2 py-0.5 rounded uppercase tracking-wide self-center -translate-y-[2px]">
-                      {product.discount}% OFF
-                    </span>
-                  </>
-                )}
+                {activeMrp > activePrice && activePrice > 0 && (
+                    <>
+                      <span className="text-lg text-gray-400 line-through font-medium">MRP {formatCurrency(activeMrp)}</span>
+                      <span className="bg-[#128842] text-white text-[13px] font-bold px-2 py-0.5 rounded uppercase tracking-wide self-center -translate-y-[2px]">
+                        {Math.round(((activeMrp - activePrice) / activeMrp) * 100)}% OFF
+                      </span>
+                    </>
+                  )}
               </div>
               {discountAmount > 0 && (
                 <div className="text-green-600 font-bold text-[15px] mb-1.5 tracking-tight">

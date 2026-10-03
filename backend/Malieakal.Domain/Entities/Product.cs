@@ -17,6 +17,7 @@ namespace Malieakal.Domain.Entities
         public string? Model { get; set; }
         public decimal MRP { get; set; }
         public decimal Discount { get; set; }
+        public string DiscountType { get; set; } = "Percentage";
         public decimal FinalPrice { get; set; }
         public int Stock { get; set; }
         public int ReservedStock { get; set; }

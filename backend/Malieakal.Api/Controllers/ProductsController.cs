@@ -2,6 +2,7 @@ using Malieakal.Application.Abstractions;
 using Malieakal.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Dapper;
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
@@ -12,13 +13,52 @@ namespace Malieakal.Api.Controllers
     [Route("api/v1/[controller]")]
     public class ProductsController : ControllerBase
     {
+        private async Task ApplyCatalogPromotions(IEnumerable<Malieakal.Domain.Entities.Product> products)
+        {
+            if (products == null || !products.Any()) return;
+            using var connection = _db.CreateConnection();
+            var activePromos = (await connection.QueryAsync<Malieakal.Domain.Entities.CatalogPromotion>(
+                "SELECT * FROM CatalogPromotions WHERE IsActive = true AND StartDate <= @Now AND EndDate >= @Now",
+                new { Now = System.DateTime.UtcNow })).ToList();
+
+            if (!activePromos.Any()) return;
+
+            foreach (var p in products)
+            {
+                var promo = activePromos.FirstOrDefault(pr => pr.TargetType == "Brand" && pr.TargetId == p.BrandId)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetId == p.CategoryId)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Store");
+
+                if (promo != null)
+                {
+                    decimal promoDiscount = promo.DiscountType == "Percentage" 
+                        ? p.MRP * (promo.DiscountValue / 100m) 
+                        : promo.DiscountValue;
+
+                    decimal newFinalPrice = p.MRP - promoDiscount;
+                    if (newFinalPrice < p.FinalPrice)
+                    {
+                        p.FinalPrice = newFinalPrice;
+                        p.Discount = promo.DiscountValue;
+                    }
+                }
+            }
+        }
+
+        private async Task ApplyCatalogPromotions(Malieakal.Domain.Entities.Product product)
+        {
+            if (product != null) await ApplyCatalogPromotions(new[] { product });
+        }
+
         private readonly IProductRepository _productRepository;
+        private readonly Malieakal.Application.Abstractions.IDbConnectionFactory _db;
         private readonly IFileService _fileService;
         private readonly Microsoft.AspNetCore.SignalR.IHubContext<Malieakal.Api.Hubs.StorefrontHub> _hubContext;
 
-        public ProductsController(IProductRepository productRepository, IFileService fileService, Microsoft.AspNetCore.SignalR.IHubContext<Malieakal.Api.Hubs.StorefrontHub> hubContext)
+        public ProductsController(IProductRepository productRepository, IFileService fileService, Microsoft.AspNetCore.SignalR.IHubContext<Malieakal.Api.Hubs.StorefrontHub> hubContext, Malieakal.Application.Abstractions.IDbConnectionFactory db)
         {
             _productRepository = productRepository;
+            _db = db;
             _fileService = fileService;
             _hubContext = hubContext;
         }

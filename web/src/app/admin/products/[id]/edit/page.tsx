@@ -60,6 +60,7 @@ export default function EditProductPage() {
             brandId: p.brandId,
             mrp: p.mrp,
             discount: p.discount || 0,
+      discountType: p.discountType || 'Flat',
             stock: p.stock,
             description: p.description || '',
             features: p.features || '',
@@ -119,6 +120,7 @@ export default function EditProductPage() {
     brandId: 0,
     mrp: 0,
     discount: 0,
+    discountType: 'Flat',
     stock: 0,
     description: '',
     features: '',
@@ -196,7 +198,7 @@ export default function EditProductPage() {
     setFormData({ ...formData, name, slug: generateSlug(name) });
   };
 
-  const finalPrice = Math.max(0, formData.mrp - formData.discount);
+  const finalPrice = Math.max(0, formData.discountType === 'Percentage' ? formData.mrp - (formData.mrp * (formData.discount / 100)) : formData.mrp - formData.discount);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -626,10 +628,19 @@ export default function EditProductPage() {
                 <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">MRP (INR)</label>
                 <input type="number" required min={0} value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: parseFloat(e.target.value) || 0})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold text-[#0B192C]" />
               </div>
-              <div>
-                <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Discount Amount (INR)</label>
-                <input type="number" required min={0} value={formData.discount} onChange={(e) => setFormData({...formData, discount: parseFloat(e.target.value) || 0})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold text-[#0B192C]" />
-              </div>
+              <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Discount Value</label>
+                    <input type="number" step="0.01" required min={0} value={formData.discount} onChange={(e) => setFormData({...formData, discount: parseFloat(e.target.value) || 0})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold text-[#0B192C]" />
+                  </div>
+                  <div className="w-1/3">
+                    <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Type</label>
+                    <select value={formData.discountType} onChange={(e) => setFormData({...formData, discountType: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold text-[#0B192C]">
+                      <option value="Flat">Flat (₹)</option>
+                      <option value="Percentage">Percentage (%)</option>
+                    </select>
+                  </div>
+                </div>
               <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex justify-between items-center">
                 <span className="text-xs font-bold text-green-700 uppercase tracking-widest">Final Price</span>
                 <span className="text-lg font-extrabold text-green-700">{formatCurrency(finalPrice)}</span>

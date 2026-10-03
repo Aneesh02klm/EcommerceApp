@@ -21,17 +21,8 @@ export default function AdminCampaigns() {
               className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-md text-sm w-[320px] focus:outline-none focus:ring-1 focus:ring-[#0B192C]"
             />
           </div>
-          <div className="relative cursor-pointer">
-            <Bell size={20} className="text-gray-600" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-gray-50"></span>
-          </div>
-          <div className="flex items-center gap-3">
-            <img src="https://i.pravatar.cc/150?u=admin" alt="Admin" className="w-9 h-9 rounded-full object-cover" />
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">System Owner</span>
-              <span className="text-sm font-bold text-[#0B192C] leading-none">George Malieakal</span>
-            </div>
-          </div>
+          
+          
         </div>
       </header>
 

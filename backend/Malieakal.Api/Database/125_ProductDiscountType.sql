@@ -1,0 +1,1 @@
+ALTER TABLE Products ADD COLUMN IF NOT EXISTS DiscountType VARCHAR(50) DEFAULT 'Percentage';

@@ -92,10 +92,10 @@ export function ProductCard({ id, name, slug, mrp, finalPrice, finalprice, disco
           </div>
         )}
         
-        {discount > 0 && (
+        {mrp > price && price > 0 && (
           <div className="absolute top-3 right-3 z-10">
             <span className="bg-[#1a8b44] text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">
-              {discount}% OFF
+              {Math.round(((mrp - price) / mrp) * 100)}% OFF
             </span>
           </div>
         )}

@@ -73,8 +73,8 @@ namespace Malieakal.Infrastructure.Repositories
             try
             {
                 var sql = @"
-                    INSERT INTO Products (Id, CategoryId, SubcategoryId, BrandId, Name, Slug, SKU, Model, MRP, Discount, FinalPrice, Stock, Description, Features, Highlights, IsActive, IsBestSeller, CreatedAt, UpdatedAt, SpecificationJson)
-                    VALUES (@Id, @CategoryId, @SubcategoryId, @BrandId, @Name, @Slug, @SKU, @Model, @MRP, @Discount, @FinalPrice, @Stock, @Description, @Features, @Highlights, @IsActive, @IsBestSeller, @CreatedAt, @UpdatedAt, @SpecificationJson::jsonb);";
+                    INSERT INTO Products (Id, CategoryId, SubcategoryId, BrandId, Name, Slug, SKU, Model, MRP, Discount, DiscountType, FinalPrice, Stock, Description, Features, Highlights, IsActive, IsBestSeller, CreatedAt, UpdatedAt, SpecificationJson)
+                    VALUES (@Id, @CategoryId, @SubcategoryId, @BrandId, @Name, @Slug, @SKU, @Model, @MRP, @Discount, @DiscountType, @FinalPrice, @Stock, @Description, @Features, @Highlights, @IsActive, @IsBestSeller, @CreatedAt, @UpdatedAt, @SpecificationJson::jsonb);";
                 await connection.ExecuteAsync(sql, product, transaction);
 
                 if (product.Images != null && product.Images.Any())
@@ -118,7 +118,7 @@ namespace Malieakal.Infrastructure.Repositories
                 var sql = @"
                     UPDATE Products 
                     SET CategoryId = @CategoryId, SubcategoryId = @SubcategoryId, BrandId = @BrandId, Name = @Name, 
-                        Slug = @Slug, SKU = @SKU, Model = @Model, MRP = @MRP, Discount = @Discount, FinalPrice = @FinalPrice, 
+                        Slug = @Slug, SKU = @SKU, Model = @Model, MRP = @MRP, Discount = @Discount, DiscountType = @DiscountType, FinalPrice = @FinalPrice, 
                         Stock = @Stock, Description = @Description, Features = @Features, Highlights = @Highlights, 
                         IsActive = @IsActive, IsBestSeller = @IsBestSeller, UpdatedAt = @UpdatedAt, SpecificationJson = @SpecificationJson::jsonb
                     WHERE Id = @Id;";
