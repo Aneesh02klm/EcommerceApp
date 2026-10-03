@@ -20,6 +20,7 @@ namespace Malieakal.Infrastructure
             services.AddScoped<IProductRepository, Malieakal.Infrastructure.Repositories.ProductRepository>();
             services.AddScoped<ISpecificationRepository, Malieakal.Infrastructure.Repositories.SpecificationRepository>();
             services.AddScoped<IBrandRepository, Malieakal.Infrastructure.Repositories.BrandRepository>();
+            services.AddScoped<IStorefrontRepository, Malieakal.Infrastructure.Repositories.StorefrontRepository>();
             services.AddScoped<ICartRepository, Malieakal.Infrastructure.Repositories.CartRepository>();
             services.AddScoped<IWishlistRepository, Malieakal.Infrastructure.Repositories.WishlistRepository>();
             services.AddScoped<IOrderRepository, Malieakal.Infrastructure.Repositories.OrderRepository>();

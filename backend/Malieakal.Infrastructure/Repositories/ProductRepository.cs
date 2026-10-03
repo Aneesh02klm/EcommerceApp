@@ -20,7 +20,7 @@ namespace Malieakal.Infrastructure.Repositories
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
             using var connection = _connectionFactory.CreateConnection();
-            return await connection.QueryAsync<Product>("SELECT * FROM Products ORDER BY p.CreatedAt DESC");
+            return await connection.QueryAsync<Product>("SELECT * FROM Products ORDER BY CreatedAt DESC");
         }
 
         public async Task<Product?> GetByIdAsync(Guid id)

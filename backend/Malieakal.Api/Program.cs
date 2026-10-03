@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -20,7 +21,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -88,6 +90,12 @@ using (var scope = app.Services.CreateScope())
               "Database/108_AdminModules.sql",
               "Database/109_FinalAdminModules.sql", "Database/110_SpecsGroup.sql", "Database/112_FixSequence.sql", "Database/111_UniversalCategorySpecs.sql", "Database/113_MobileCategorySpecs.sql", "Database/114_SpecificationGroups.sql",
             "Database/115_CategoryNav.sql",
+              "Database/116_Storefront.sql",
+              "Database/117_SeedStorefront.sql",
+              "Database/119_FinalSeed.sql",
+              "Database/120_DiscoverMore.sql",
+              "Database/121_AutomatedGrids.sql",
+              "Database/122_DraftPublish.sql",
             "Database/116_CouponUsageLimit.sql",
             "Database/108_AddVariantIdToCartItems.sql"
         };
@@ -166,6 +174,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
+app.MapHub<Malieakal.Api.Hubs.StorefrontHub>("/hubs/storefront");
 
 using (var scope = app.Services.CreateScope()) {
     var db = scope.ServiceProvider.GetRequiredService<Malieakal.Application.Abstractions.IDbConnectionFactory>();

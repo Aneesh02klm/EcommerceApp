@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutGrid, Package, ShoppingCart, Users, Box, Megaphone, LogOut, 
   FileText, ShieldCheck, Headphones, BarChart2, Settings, ChevronDown, ChevronUp
-} from 'lucide-react';
+, LayoutDashboard } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 const menuStructure = [
@@ -35,6 +35,7 @@ const menuStructure = [
       { name: 'Notifications', href: '/admin/notifications' }
     ]
   },
+  { name: 'Storefront CMS', href: '/admin/storefront', icon: LayoutDashboard },
   { name: 'Content', href: '/admin/content', icon: FileText },
   { name: 'Warranty', href: '/admin/warranty', icon: ShieldCheck },
   { name: 'Support', href: '/admin/support', icon: Headphones },
