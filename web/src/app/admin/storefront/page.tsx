@@ -26,6 +26,10 @@ interface SectionConfig {
   categoryIds?: number[];
   brandIds?: number[];
   productIds?: string[];
+  bestSellerLogic?: string;
+  minSalesThreshold?: number;
+  minDiscountThreshold?: number;
+  newArrivalsDate?: string;
   queryType?: string;
   maxItems?: number;
   imageUrl?: string;
@@ -192,40 +196,91 @@ function SortableSection({ section, updateSection, categories, brands, products 
           </div>
         )}
 
-        {section.type === 'ProductGrid' && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Query Type</label>
-              <select value={section.queryType || 'Manual'} onChange={e => updateSection(section.id, { queryType: e.target.value })} className="w-full border border-gray-200 rounded p-2 text-sm bg-white">
-                <option value="Manual">Manual Selection</option>
-                <option value="NewArrivals">Automated: New Arrivals</option>
-                <option value="BestSellers">Automated: Best Sellers</option>
-                <option value="LightningDeals">Automated: Lightning Deals</option>
-              </select>
-            </div>
+        {section.type === 'ProductGrid' && (() => {
+            const t = (section.title || '').toLowerCase();
+            const isLightning = t.includes('lightning') || t.includes('deal') || t.includes('offer');
+            const isNewArrivals = t.includes('new') || t.includes('arrival');
+            const isBestSellers = t.includes('best') || t.includes('seller') || t.includes('top');
             
-            {(!section.queryType || section.queryType === 'Manual') ? (
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Select Products</label>
-                  <div className="flex gap-2 flex-wrap max-h-48 overflow-y-auto p-2 border border-gray-200 rounded">
-                     {products.map(p => (
-                       <label key={p.id} className="flex items-center gap-2 text-xs whitespace-nowrap bg-gray-50 px-2 py-1 rounded border">
-                         <input type="checkbox" checked={(section.productIds || []).includes(p.id)} onChange={e => {
-                           const ids = section.productIds || [];
-                           updateSection(section.id, { productIds: e.target.checked ? [...ids, p.id] : ids.filter(i => i !== p.id) });
-                         }} /> {p.name.substring(0, 30)}...
-                       </label>
-                     ))}
+            return (
+            <div className="space-y-4">
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Selection Mode ({isLightning ? 'Lightning Deals' : isNewArrivals ? 'New Arrivals' : isBestSellers ? 'Best Sellers' : 'Generic Grid'})</label>
+                <select value={section.queryType || 'Manual'} onChange={e => updateSection(section.id, { queryType: e.target.value, bestSellerLogic: '', minDiscountThreshold: 20, newArrivalsDate: '' })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none font-semibold text-[#0B192C]">
+                  <option value="Manual">Manual Selection</option>
+                  {isLightning && <option value="LightningDeals">Automated by Discount Percentage</option>}
+                  {isNewArrivals && <option value="NewArrivals">Automated by Date</option>}
+                  {isBestSellers && <option value="BestSellers">Automated by Sales</option>}
+                  {(!isLightning && !isNewArrivals && !isBestSellers) && (
+                      <>
+                          <option value="NewArrivals">Automated: New Arrivals</option>
+                          <option value="BestSellers">Automated: Best Sellers</option>
+                          <option value="LightningDeals">Automated: Lightning Deals</option>
+                      </>
+                  )}
+                </select>
+              </div>
+              
+              {section.queryType === 'LightningDeals' && isLightning && (
+                  <div className="flex gap-4 bg-gray-50 p-3 rounded border border-gray-200 mt-2">
+                    <div className="w-1/2">
+                      <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Minimum Discount Threshold (%)</label>
+                      <input type="number" min="0" max="100" value={section.minDiscountThreshold ?? 20} onChange={e => updateSection(section.id, { minDiscountThreshold: parseInt(e.target.value) || 0 })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none" />
+                    </div>
                   </div>
-                </div>
-            ) : (
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Max Items to Display</label>
-                  <input type="number" min="1" max="24" value={section.maxItems || 4} onChange={e => updateSection(section.id, { maxItems: parseInt(e.target.value) || 4 })} className="w-full border border-gray-200 rounded p-2 text-sm bg-white" />
-                </div>
-            )}
-          </div>
-        )}
+              )}
+
+              {section.queryType === 'NewArrivals' && isNewArrivals && (
+                  <div className="flex gap-4 bg-gray-50 p-3 rounded border border-gray-200 mt-2">
+                    <div className="w-1/2">
+                      <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Products Added After (Date)</label>
+                      <input type="date" value={section.newArrivalsDate || ''} onChange={e => updateSection(section.id, { newArrivalsDate: e.target.value })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none" />
+                    </div>
+                  </div>
+              )}
+
+              {section.queryType === 'BestSellers' && isBestSellers && (
+                  <div className="flex gap-4 bg-gray-50 p-3 rounded border border-gray-200 mt-2">
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Best Seller Logic</label>
+                      <select value={section.bestSellerLogic || 'Hybrid'} onChange={e => updateSection(section.id, { bestSellerLogic: e.target.value })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none">
+                        <option value="Manual Only">Manual Only (IsBestSeller Flag)</option>
+                        <option value="Automated by Sales">Automated by Sales Volume</option>
+                        <option value="Hybrid">Hybrid (Flag + Sales)</option>
+                      </select>
+                    </div>
+                    {section.bestSellerLogic !== 'Manual Only' && (
+                      <div className="w-1/3">
+                        <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Min Sales Threshold</label>
+                        <input type="number" min="0" value={section.minSalesThreshold ?? 50} onChange={e => updateSection(section.id, { minSalesThreshold: parseInt(e.target.value) || 0 })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none" />
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+              {(!section.queryType || section.queryType === 'Manual') ? (
+                  <div>
+                    <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Select Products</label>
+                    <div className="flex gap-2 flex-wrap max-h-48 overflow-y-auto p-2 border border-gray-200 rounded bg-white">
+                       {products.map(p => (
+                         <label key={p.id} className="flex items-center gap-2 text-xs whitespace-nowrap bg-gray-50 px-2 py-1 rounded border">
+                           <input type="checkbox" checked={(section.productIds || []).includes(p.id)} onChange={e => {
+                             const ids = section.productIds || [];
+                             updateSection(section.id, { productIds: e.target.checked ? [...ids, p.id] : ids.filter(i => i !== p.id) });
+                           }} /> {p.name.substring(0, 30)}...
+                         </label>
+                       ))}
+                    </div>
+                  </div>
+              ) : (
+                  <div>
+                    <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Max Items to Display</label>
+                    <input type="number" min="1" max="24" value={section.maxItems || 4} onChange={e => updateSection(section.id, { maxItems: parseInt(e.target.value) || 4 })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white" />
+                  </div>
+              )}
+            </div>
+            );
+          })()}
       </div>
 
     </div>

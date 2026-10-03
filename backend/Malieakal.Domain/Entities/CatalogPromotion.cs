@@ -8,6 +8,8 @@ namespace Malieakal.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string TargetType { get; set; } = string.Empty; // Store, Category, Brand
         public int? TargetId { get; set; }
+        public int? TargetCategoryId { get; set; }
+        public int? TargetBrandId { get; set; }
         public string DiscountType { get; set; } = string.Empty; // Percentage, Flat
         public decimal DiscountValue { get; set; }
         public DateTime StartDate { get; set; }

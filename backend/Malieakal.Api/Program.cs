@@ -99,6 +99,8 @@ using (var scope = app.Services.CreateScope())
               "Database/124_CouponsUpgrade.sql",
               "Database/125_ProductDiscountType.sql",
               "Database/126_CatalogPromotions.sql",
+              "Database/127_StorefrontIndexes.sql",
+              "Database/128_CatalogPromotionsAdvanced.sql",
               "Database/122_DraftPublish.sql",
             "Database/116_CouponUsageLimit.sql",
             "Database/108_AddVariantIdToCartItems.sql",

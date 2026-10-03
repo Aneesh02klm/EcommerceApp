@@ -25,8 +25,9 @@ namespace Malieakal.Api.Controllers
 
             foreach (var p in products)
             {
-                var promo = activePromos.FirstOrDefault(pr => pr.TargetType == "Brand" && pr.TargetId == p.BrandId)
-                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetId == p.CategoryId)
+                var promo = activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetCategoryId == p.CategoryId && pr.TargetBrandId == p.BrandId)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Brand" && pr.TargetBrandId == p.BrandId)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetCategoryId == p.CategoryId && pr.TargetBrandId == null)
                          ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Store");
 
                 if (promo != null)
@@ -35,12 +36,8 @@ namespace Malieakal.Api.Controllers
                         ? p.MRP * (promo.DiscountValue / 100m) 
                         : promo.DiscountValue;
 
-                    decimal newFinalPrice = p.MRP - promoDiscount;
-                    if (newFinalPrice < p.FinalPrice)
-                    {
-                        p.FinalPrice = newFinalPrice;
-                        p.Discount = promo.DiscountValue;
-                    }
+                    p.FinalPrice = p.MRP - promoDiscount;
+                    p.Discount = promo.DiscountValue;
                 }
             }
         }

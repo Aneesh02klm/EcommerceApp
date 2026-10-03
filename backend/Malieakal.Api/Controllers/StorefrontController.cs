@@ -128,17 +128,49 @@ namespace Malieakal.Api.Controllers
                     
                     if (queryType == "NewArrivals")
                     {
-                        var items = allProducts.OrderByDescending(p => p.CreatedAt).Take(maxItems).ToList();
+                        DateTime dateThreshold = DateTime.UtcNow.AddDays(-45);
+                        var dateStr = section["newArrivalsDate"]?.ToString();
+                        if (!string.IsNullOrEmpty(dateStr) && DateTime.TryParse(dateStr, out DateTime d)) dateThreshold = d;
+
+                        var items = allProducts.Where(p => p.CreatedAt >= dateThreshold)
+                                               .OrderByDescending(p => p.CreatedAt)
+                                               .Take(maxItems).ToList();
+                        
                         section["items"] = JsonSerializer.SerializeToNode(items, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
                     }
                     else if (queryType == "BestSellers")
                     {
-                        var items = allProducts.OrderByDescending(p => p.SoldStock).ThenByDescending(p => p.CreatedAt).Take(maxItems).ToList();
+                        var logic = section["bestSellerLogic"]?.ToString() ?? "Hybrid";
+                        int threshold = 50;
+                        if (int.TryParse(section["minSalesThreshold"]?.ToString(), out int t)) threshold = t;
+
+                        IEnumerable<Malieakal.Domain.Entities.Product> query = allProducts;
+                        
+                        if (logic == "Manual Only")
+                        {
+                            query = allProducts.Where(p => p.IsBestSeller);
+                        }
+                        else if (logic == "Automated by Sales")
+                        {
+                            query = allProducts.Where(p => p.SoldStock >= threshold);
+                        }
+                        else // Hybrid
+                        {
+                            query = allProducts.Where(p => p.IsBestSeller || p.SoldStock >= threshold);
+                        }
+
+                        var items = query.OrderByDescending(p => p.SoldStock).ThenByDescending(p => p.CreatedAt).Take(maxItems).ToList();
                         section["items"] = JsonSerializer.SerializeToNode(items, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
                     }
                     else if (queryType == "LightningDeals")
                     {
-                        var items = allProducts.Where(p => p.Discount > 0).OrderByDescending(p => p.Discount).Take(maxItems).ToList();
+                        decimal discountThreshold = 20m;
+                        if (decimal.TryParse(section["minDiscountThreshold"]?.ToString(), out decimal d)) discountThreshold = d;
+
+                        var items = allProducts.Where(p => p.MRP > 0 && p.MRP > p.FinalPrice)
+                                               .Where(p => ((p.MRP - p.FinalPrice) / p.MRP) * 100m >= discountThreshold)
+                                               .OrderByDescending(p => (p.MRP - p.FinalPrice) / p.MRP)
+                                               .Take(maxItems).ToList();
                         section["items"] = JsonSerializer.SerializeToNode(items, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
                     }
                     else
