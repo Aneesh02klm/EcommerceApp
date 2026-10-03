@@ -60,6 +60,7 @@ namespace Malieakal.Domain.Entities
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public List<OrderItem> Items { get; set; } = new();
+        public List<OrderStatusHistory> StatusHistory { get; set; } = new();
         public Address? ShippingAddress { get; set; }
         public Payment? PaymentInfo { get; set; }
     }

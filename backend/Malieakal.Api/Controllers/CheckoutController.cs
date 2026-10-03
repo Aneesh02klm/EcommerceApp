@@ -19,8 +19,10 @@ namespace Malieakal.Api.Controllers
         private readonly IOrderRepository _orderRepository;
         private readonly IPaymentService _paymentService;
         private readonly IUserRepository _userRepository;
+        
         private readonly Malieakal.Application.Services.IDeliveryEngineService _deliveryEngine;
         private readonly ICouponRepository _couponRepository;
+        private readonly INotificationRepository _notificationRepository;
 
         public CheckoutController(
             ICartRepository cartRepository,
@@ -29,7 +31,8 @@ namespace Malieakal.Api.Controllers
             IPaymentService paymentService,
             IUserRepository userRepository,
             Malieakal.Application.Services.IDeliveryEngineService deliveryEngine,
-            ICouponRepository couponRepository)
+            ICouponRepository couponRepository,
+            INotificationRepository notificationRepository)
         {
             _cartRepository = cartRepository;
             _productRepository = productRepository;
@@ -38,7 +41,9 @@ namespace Malieakal.Api.Controllers
             _userRepository = userRepository;
             _deliveryEngine = deliveryEngine;
             _couponRepository = couponRepository;
+            _notificationRepository = notificationRepository;
         }
+
 
         private Guid? GetUserId() 
         {
@@ -252,6 +257,29 @@ namespace Malieakal.Api.Controllers
             if (request.PaymentMethod == "COD")
             {
                 order.Status = "Confirmed";
+                    
+                    
+                if (!string.IsNullOrEmpty(order.PromoCode)) { await _couponRepository.IncrementUsageAsync(order.PromoCode); }
+                
+                await _orderRepository.AddStatusHistoryAsync(order.Id, "Placed", "Order paid successfully via Razorpay.");
+                await _notificationRepository.AddNotificationAsync(new Malieakal.Domain.Entities.Notification
+                {
+                    Role = "Admin",
+                    Title = "New Order Placed",
+                    Message = "Order " + order.OrderNumber + " received via Razorpay.",
+                    LinkUrl = "/admin/orders/" + order.Id
+                });
+
+                    
+                    await _orderRepository.AddStatusHistoryAsync(order.Id, "Placed", "Order placed successfully.");
+                    await _notificationRepository.AddNotificationAsync(new Malieakal.Domain.Entities.Notification
+                    {
+                        Role = "Admin",
+                        Title = "New Order Placed",
+                        Message = "Order " + order.OrderNumber + " received via COD.",
+                        LinkUrl = "/admin/orders/" + order.Id
+                    });
+
 
                 var payment = new Payment
                 {

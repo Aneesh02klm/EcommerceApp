@@ -24,6 +24,7 @@ namespace Malieakal.Infrastructure
             services.AddScoped<ICartRepository, Malieakal.Infrastructure.Repositories.CartRepository>();
             services.AddScoped<IWishlistRepository, Malieakal.Infrastructure.Repositories.WishlistRepository>();
             services.AddScoped<IOrderRepository, Malieakal.Infrastructure.Repositories.OrderRepository>();
+            services.AddScoped<INotificationRepository, Malieakal.Infrastructure.Repositories.NotificationRepository>();
             services.AddScoped<ICouponRepository, Malieakal.Infrastructure.Repositories.CouponRepository>();
             services.AddScoped<ILogisticsRepository, Malieakal.Infrastructure.Repositories.LogisticsRepository>();
             services.AddScoped<IPaymentService, Malieakal.Infrastructure.Services.RazorpayService>();

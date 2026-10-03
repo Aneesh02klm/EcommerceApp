@@ -31,6 +31,7 @@ namespace Malieakal.Api.Controllers
         }
 
         [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> GetDashboardMetrics([FromQuery] string range = "today", [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null)
         {
             try
@@ -70,9 +71,10 @@ namespace Malieakal.Api.Controllers
                     WHERE r.Name = 'Customer' AND u.CreatedAt >= @StartDate AND u.CreatedAt <= @EndDate;
 
                     -- 3. Pending Orders
-                    SELECT COUNT(Id) as PendingOrders
+                    SELECT Status, COUNT(Id) as Count
                     FROM Orders
-                    WHERE Status NOT IN ('Delivered', 'Cancelled') AND CreatedAt >= @StartDate AND CreatedAt <= @EndDate;
+                    WHERE Status IN ('Placed', 'Confirmed', 'Processing', 'Shipped')
+                    GROUP BY Status;
 
                     -- 4. Revenue This Month
                     SELECT COALESCE(SUM(TotalAmount), 0) as RevenueThisMonth
@@ -141,7 +143,7 @@ namespace Malieakal.Api.Controllers
 
                 var periodMetrics = await multi.ReadSingleAsync<PeriodMetricsResult>();
                 var activeCustomers = await multi.ReadSingleAsync<int>();
-                var pendingOrders = await multi.ReadSingleAsync<int>();
+                var pendingOrdersBreakdown = await multi.ReadAsync<dynamic>();
                 var revenueThisMonth = await multi.ReadSingleAsync<decimal>();
                 var stockMetrics = await multi.ReadSingleAsync<StockMetricsResult>();
                 var openComplaints = await multi.ReadSingleAsync<int>();
@@ -158,7 +160,7 @@ namespace Malieakal.Api.Controllers
                         periodSales = periodMetrics.PeriodSales,
                         periodOrders = periodMetrics.PeriodOrders,
                         activeCustomers = activeCustomers,
-                        pendingOrders = pendingOrders,
+                        pendingOrdersBreakdown = pendingOrdersBreakdown,
                         periodRevenue = revenueThisMonth,
                         productsInStock = stockMetrics.ProductsInStock,
                         lowStockAlerts = stockMetrics.LowStockAlerts,

@@ -8,5 +8,6 @@ namespace Malieakal.Application.Abstractions
     {
         Task<Coupon?> GetByCodeAsync(string code, System.Guid? userId = null);
         Task<IEnumerable<Coupon>> GetActiveCouponsAsync();
+        Task IncrementUsageAsync(string code);
     }
 }

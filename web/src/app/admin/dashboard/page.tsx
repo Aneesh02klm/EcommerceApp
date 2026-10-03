@@ -11,6 +11,13 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
+
+  const getPendingOrdersString = (breakdown: any) => {
+    if (!breakdown || !Array.isArray(breakdown)) return '0';
+    if (breakdown.length === 0) return '0';
+    return breakdown.map((b: any) => `${b.status}: ${b.count}`).join(' | ');
+  };
+
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -112,17 +119,7 @@ export default function AdminDashboard() {
               className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-md text-sm w-[320px] focus:outline-none focus:ring-1 focus:ring-[#0B192C]"
             />
           </div>
-          <div className="relative cursor-pointer">
-            <Bell size={20} className="text-gray-600" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border border-gray-50"></span>
-          </div>
-          <div className="flex items-center gap-3">
-            <img src={user?.avatarUrl || "https://i.pravatar.cc/150?u=admin"} alt="Admin" className="w-9 h-9 rounded-full object-cover" />
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{Array.isArray(user?.roles) ? user.roles.map((r: any) => typeof r === 'string' ? r : (r.name || '')).join(', ') : 'ADMIN'}</span>
-              <span className="text-sm font-bold text-[#0B192C] leading-none">{typeof user?.firstName === 'string' ? user?.firstName : 'Admin'} {typeof user?.lastName === 'string' ? user?.lastName : ''}</span>
-            </div>
-          </div>
+          
         </div>
       </header>
 
@@ -157,7 +154,12 @@ export default function AdminDashboard() {
         <MetricCard isLoading={isRefreshing} title="PERIOD SALES" value={formatCurrency(data?.periodSales)} />
         <MetricCard isLoading={isRefreshing} title="PERIOD ORDERS" value={formatNumber(data?.periodOrders)} />
         <MetricCard isLoading={isRefreshing} title="NEW CUSTOMERS" value={formatNumber(data?.activeCustomers)} />
-        <MetricCard isLoading={isRefreshing} title="PENDING ORDERS" value={formatNumber(data?.pendingOrders)} />
+        <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm flex flex-col justify-between col-span-1 md:col-span-2 lg:col-span-1">
+  <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">PENDING ORDERS</h3>
+  <div className="flex items-end justify-between">
+    {isRefreshing ? <Loader2 className="animate-spin text-amber-500" size={24} /> : <span className="text-sm font-black text-[#0B192C]">{getPendingOrdersString(data?.pendingOrdersBreakdown)}</span>}
+  </div>
+</div>
         
         <MetricCard isLoading={isRefreshing} title="PERIOD REVENUE" value={formatCurrency(data?.periodRevenue)} />
         <MetricCard isLoading={isRefreshing} title="PRODUCTS IN STOCK" value={formatNumber(data?.productsInStock)} />

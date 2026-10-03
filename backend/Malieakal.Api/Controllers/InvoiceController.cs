@@ -27,7 +27,8 @@ namespace Malieakal.Api.Controllers
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
-            if (order == null || order.UserId != userId)
+            bool isAdmin = User.IsInRole("Admin");
+            if (order == null || (!isAdmin && order.UserId != userId))
             {
                 return NotFound(new { success = false, message = "Order not found or access denied." });
             }

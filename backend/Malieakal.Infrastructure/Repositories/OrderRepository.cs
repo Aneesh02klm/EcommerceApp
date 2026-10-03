@@ -272,9 +272,7 @@ namespace Malieakal.Infrastructure.Repositories
                     transaction);
 
                 
-                if (!string.IsNullOrEmpty(order.PromoCode)) {
-                    await connection.ExecuteAsync("UPDATE Coupons SET TimesUsed = TimesUsed + 1 WHERE Code = @PromoCode", new { PromoCode = order.PromoCode }, transaction);
-                }
+                // Promocode usage increment moved to Controller after successful payment
                 transaction.Commit();
                 order.Id = newOrderId; // update the original object so the controller gets the new ID
                 return newOrderId;
@@ -313,9 +311,17 @@ namespace Malieakal.Infrastructure.Repositories
                     "SELECT * FROM Addresses WHERE Id = @Id",
                     new { Id = order.ShippingAddressId });
 
+                
                 order.PaymentInfo = await connection.QuerySingleOrDefaultAsync<Payment>(
                     "SELECT * FROM Payments WHERE OrderId = @OrderId",
                     new { OrderId = orderId });
+
+                try {
+                    order.StatusHistory = (await connection.QueryAsync<OrderStatusHistory>(
+                        "SELECT * FROM OrderStatusHistory WHERE OrderId = @OrderId ORDER BY CreatedAt ASC",
+                        new { OrderId = orderId })).ToList();
+                } catch { } // If table doesn't exist yet, ignore
+
             }
             return order;
         }
@@ -412,6 +418,17 @@ namespace Malieakal.Infrastructure.Repositories
         {
             using var connection = _connectionFactory.CreateConnection();
             return await connection.QueryAsync<Order>("SELECT * FROM Orders ORDER BY CreatedAt DESC");
+        }
+
+        
+        public async Task AddStatusHistoryAsync(Guid orderId, string status, string comments = null)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            try { 
+                await connection.ExecuteAsync(
+                    "INSERT INTO OrderStatusHistory (OrderId, Status, Comments) VALUES (@OrderId, @Status, @Comments)", 
+                    new { OrderId = orderId, Status = status, Comments = comments }); 
+            } catch {} 
         }
 
         public async Task UpdateOrderStatusAsync(Guid orderId, string status)

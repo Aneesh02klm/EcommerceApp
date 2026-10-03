@@ -6,6 +6,7 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { CategoryNavClient } from '@/components/ui/CategoryNavClient';
 import { UserNavClient } from '@/components/ui/UserNavClient';
 import { CartNavBadge } from '@/components/ui/CartNavBadge';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 import { AppInitializer } from '@/components/ui/AppInitializer';
 import { ToastContainer } from '@/components/ui/Toast';
 import { CompareBar } from '@/components/ui/CompareBar';
@@ -111,6 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <span className="text-[9px] font-bold uppercase tracking-wider">Stores</span>
               </Link>
 
+              <NotificationBell />
               <WishlistNavBadge />
 
               <CartNavBadge />

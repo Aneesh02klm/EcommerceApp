@@ -13,6 +13,7 @@ namespace Malieakal.Application.Abstractions
         Task<IEnumerable<Order>> GetAllOrdersAsync();
         Task UpdatePaymentStatusAsync(Guid orderId, string paymentId, string signature, string status);
         Task UpdateOrderStatusAsync(Guid orderId, string status);
+        Task AddStatusHistoryAsync(Guid orderId, string status, string? comments = null);
         Task UpdateOrderTrackingAsync(Guid orderId, string? deliveryMethod, string? courierName, string? trackingId, string? trackingUrl);
         Task<bool> LinkGuestOrderToUserAsync(Guid orderId, Guid userId, string email);
 

@@ -97,7 +97,9 @@ using (var scope = app.Services.CreateScope())
               "Database/121_AutomatedGrids.sql",
               "Database/122_DraftPublish.sql",
             "Database/116_CouponUsageLimit.sql",
-            "Database/108_AddVariantIdToCartItems.sql"
+            "Database/108_AddVariantIdToCartItems.sql",
+            "Database/123_OrderWorkflow.sql",
+            "Database/124_SyncCouponCounts.sql"
         };
         
         var seedScripts = new[] {
@@ -113,9 +115,13 @@ using (var scope = app.Services.CreateScope())
         foreach(var file in schemaScripts) {
             var path = Path.Combine(Directory.GetCurrentDirectory(), file);
             if (File.Exists(path)) {
-                var sql = File.ReadAllText(path);
-                using var cmd = new Npgsql.NpgsqlCommand(sql, targetConn);
-                cmd.ExecuteNonQuery();
+                try {
+                    var sql = File.ReadAllText(path);
+                    using var cmd = new Npgsql.NpgsqlCommand(sql, targetConn);
+                    cmd.ExecuteNonQuery();
+                } catch (Exception ex) {
+                    Console.WriteLine($"DB Init Error in {file}: {ex.Message}");
+                }
             }
         }
 

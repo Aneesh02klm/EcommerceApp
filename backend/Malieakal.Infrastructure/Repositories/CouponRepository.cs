@@ -36,5 +36,13 @@ namespace Malieakal.Infrastructure.Repositories
                   AND (ExpiryDate IS NULL OR ExpiryDate > @Now)",
                   new { Now = DateTime.UtcNow });
         }
+
+        public async Task IncrementUsageAsync(string code)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.ExecuteAsync(
+                "UPDATE Coupons SET TimesUsed = TimesUsed + 1 WHERE Code = @Code",
+                new { Code = code });
+        }
     }
 }

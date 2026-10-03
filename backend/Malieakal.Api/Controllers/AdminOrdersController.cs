@@ -13,10 +13,15 @@ namespace Malieakal.Api.Controllers
     {
         private readonly IOrderRepository _orderRepository;
 
-        public AdminOrdersController(IOrderRepository orderRepository)
+        
+        private readonly INotificationRepository _notificationRepository;
+
+        public AdminOrdersController(IOrderRepository orderRepository, INotificationRepository notificationRepository)
         {
             _orderRepository = orderRepository;
+            _notificationRepository = notificationRepository;
         }
+
 
         [HttpGet]
         public async Task<IActionResult> GetAllOrders()
@@ -25,12 +30,38 @@ namespace Malieakal.Api.Controllers
             return Ok(new { success = true, data = orders });
         }
 
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetOrderById(Guid id)
+        {
+            var order = await _orderRepository.GetOrderByIdAsync(id);
+            if (order == null) return NotFound(new { success = false, message = "Order not found." });
+            return Ok(new { success = true, data = order });
+        }
+
+        
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
         {
             await _orderRepository.UpdateOrderStatusAsync(id, request.Status);
+            await _orderRepository.AddStatusHistoryAsync(id, request.Status, "Status updated by admin.");
+            
+            var order = await _orderRepository.GetOrderByIdAsync(id);
+            if (order != null && order.UserId.HasValue)
+            {
+                await _notificationRepository.AddNotificationAsync(new Malieakal.Domain.Entities.Notification
+                {
+                    UserId = order.UserId,
+                    Role = "Customer",
+                    Title = "Order " + request.Status,
+                    Message = "Your order " + order.OrderNumber + " is now " + request.Status + ".",
+                    LinkUrl = "/account/orders/" + order.Id
+                });
+            }
+
             return Ok(new { success = true, message = "Order status updated successfully." });
         }
+
         [HttpPatch("{id}/tracking")]
         public async Task<IActionResult> UpdateTracking(Guid id, [FromBody] UpdateOrderTrackingRequest request)
         {

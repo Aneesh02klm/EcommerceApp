@@ -1,9 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Search, Loader2, FileText, CheckCircle, Package, Truck, XCircle } from 'lucide-react';
+import { Search, Loader2, FileText, CheckCircle, Package, Truck, XCircle, ChevronUp, ChevronDown, Filter } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/formatCurrency';
@@ -17,6 +18,8 @@ interface Order {
   status: string;
   createdAt: string;
   userId: string;
+  deliveryAddressSnapshot?: string;
+  emailAddress?: string;
   deliveryMethod?: string;
   courierName?: string;
   trackingId?: string;
@@ -28,6 +31,10 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const [filterStatus, setFilterStatus] = useState<string>('Actionable');
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Order, direction: 'asc' | 'desc' }>({ key: 'createdAt', direction: 'desc' });
+
   
   // Tracking Update State
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
@@ -143,6 +150,47 @@ export default function AdminOrdersPage() {
     }
   };
 
+  
+  const getFilteredOrders = () => {
+    let result = [...orders];
+    
+    if (filterStatus === 'Actionable') {
+      result = result.filter(o => !['Delivered', 'Cancelled'].includes(o.status));
+    } else if (filterStatus !== 'All') {
+      result = result.filter(o => o.status === filterStatus);
+    }
+    
+    result.sort((a, b) => {
+      let aVal = a[sortConfig.key] || '';
+      let bVal = b[sortConfig.key] || '';
+      if (sortConfig.key === 'totalAmount') {
+        aVal = Number(aVal);
+        bVal = Number(bVal);
+      }
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    return result;
+  };
+
+  const filteredOrders = getFilteredOrders();
+
+  const handleSort = (key: keyof Order) => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const SortIcon = ({ columnKey }: { columnKey: keyof Order }) => {
+    if (sortConfig.key !== columnKey) return <ChevronDown size={14} className="inline ml-1 opacity-20" />;
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp size={14} className="inline ml-1 text-amber-500" />
+      : <ChevronDown size={14} className="inline ml-1 text-amber-500" />;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -157,13 +205,34 @@ export default function AdminOrdersPage() {
           <CardTitle className="text-sm font-bold text-[#0B192C] flex items-center">
             <FileText size={18} className="mr-2 text-amber-500" /> All Orders
           </CardTitle>
+          
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <Filter size={16} className="text-gray-500" />
+            <select 
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="border border-gray-300 rounded p-1.5 text-xs font-semibold text-[#0B192C] focus:ring-1 focus:ring-amber-500 outline-none"
+            >
+              <option value="Actionable">Actionable Orders</option>
+              <option value="All">All Orders</option>
+              <option value="Placed">Placed</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Processing">Processing</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
           <div className="relative max-w-xs w-full">
+
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input 
               type="text" 
               placeholder="Search by order number..." 
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-xs font-semibold text-[#0B192C]"
             />
+          </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -176,25 +245,43 @@ export default function AdminOrdersPage() {
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4">Order ID</th>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('orderNumber')}>Order ID <SortIcon columnKey="orderNumber"/></th>
+                     <th className="px-6 py-4">Customer</th>
+                     <th className="px-6 py-4">Phone</th>
+                    <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('createdAt')}>Date <SortIcon columnKey="createdAt"/></th>
+                    <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('totalAmount')}>Amount <SortIcon columnKey="totalAmount"/></th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Update Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {orders.length === 0 ? (
+                  {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center">
+                      <td colSpan={7} className="px-6 py-12 text-center">
                         <FileText size={48} className="mx-auto text-gray-200 mb-3" />
                         <p className="text-gray-400 font-semibold">No orders found.</p>
                       </td>
                     </tr>
                   ) : (
-                    orders.map((order) => (
+                    filteredOrders.map((order) => {
+
+                      let customerName = 'Unknown';
+                      let customerPhone = 'Unknown';
+                      try {
+                        if (order.deliveryAddressSnapshot) {
+                            const snap = JSON.parse(order.deliveryAddressSnapshot);
+                            customerName = snap.fullName || snap.FullName || 'Unknown';
+                            customerPhone = snap.phone || snap.Phone || 'Unknown';
+                        } else {
+                            customerName = order.emailAddress || 'Unknown';
+                        }
+                      } catch(e) {}
+
+                    return (
                       <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 font-extrabold text-[#0B192C]">{order.orderNumber}</td>
+                        <td className="px-6 py-4 font-extrabold text-blue-600 hover:underline"><Link href={`/admin/orders/${order.id}`}>{order.orderNumber}</Link></td>
+                        <td className="px-6 py-4 text-[#0B192C] font-semibold">{customerName}</td>
+                        <td className="px-6 py-4 text-gray-500 font-medium">{customerPhone}</td>
                         <td className="px-6 py-4 font-semibold text-gray-500 text-xs">
                           {new Date(order.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })}
                         </td>
@@ -226,7 +313,8 @@ export default function AdminOrdersPage() {
                           </select>
                         </td>
                       </tr>
-                    ))
+                    );
+                  })
                   )}
                 </tbody>
               </table>
