@@ -73,8 +73,24 @@ export function FilterSidebar({ categories, brands, activeCategoryId, currentCat
     router.push(`${basePath}${queryString}`);
   };
 
-  const handleSpecChange = (specId: number, value: string) => {
-    updateParam(`SpecFilters[${specId}]`, value);
+  const handleSpecChange = (specId: number, value: string, isChecked: boolean) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const key = `SpecFilters[${specId}]`;
+    let current = params.get(key) ? params.get(key)!.split(',') : [];
+    
+    if (!isChecked) {
+        // user unchecked it, remove it
+        current = current.filter(v => v !== value);
+    } else {
+        // user checked it, add it
+        if (!current.includes(value)) current.push(value);
+    }
+    
+    if (current.length > 0) {
+        updateParam(key, current.join(','));
+    } else {
+        updateParam(key, ''); // empty string will be deleted by updateParam
+    }
   };
 
   // Helper for slider percent
@@ -223,7 +239,7 @@ export function FilterSidebar({ categories, brands, activeCategoryId, currentCat
                 <h4 className="text-sm font-bold text-gray-900 mb-4">{specFacet.name}</h4>
                 <div className="flex flex-col gap-3">
                   {specFacet.values.map((valObj: any) => {
-                    const isChecked = urlValue === valObj.value;
+                    const isChecked = urlValue.split(',').includes(valObj.value);
                     return (
                       <label key={valObj.value} className="flex items-center justify-between cursor-pointer group">
                         <div className="flex items-center gap-3">
@@ -231,7 +247,7 @@ export function FilterSidebar({ categories, brands, activeCategoryId, currentCat
                               <input 
                                 type="checkbox" 
                                 checked={isChecked}
-                                onChange={() => handleSpecChange(specFacet.specId, isChecked ? '' : valObj.value)}
+                                onChange={() => handleSpecChange(specFacet.specId, valObj.value, !isChecked)}
                                 className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:border-[#0B192C] checked:bg-[#0B192C] transition-colors cursor-pointer"
                               />
                               <Check size={10} className="text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" strokeWidth={4} />

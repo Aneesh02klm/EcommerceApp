@@ -12,5 +12,6 @@ namespace Malieakal.Application.Abstractions
         Task<int> CreateAsync(Category category);
         Task UpdateAsync(Category category);
         Task DeleteAsync(int id);
+        Task UpdateDisplayOrderAsync(List<int> orderedCategoryIds);
     }
 }

@@ -1,6 +1,7 @@
 using Malieakal.Application.Abstractions;
 using Malieakal.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using System;
 
@@ -24,6 +25,15 @@ namespace Malieakal.Api.Controllers
         {
             var categories = await _categoryRepo.GetTopNavCategoriesAsync();
             return Ok(new { success = true, data = categories });
+        }
+
+        [HttpPut("reorder")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Reorder([FromBody] List<int> orderedIds)
+        {
+            if (orderedIds == null || !orderedIds.Any()) return BadRequest(new { success = false, message = "Invalid data" });
+            await _categoryRepo.UpdateDisplayOrderAsync(orderedIds);
+            return Ok(new { success = true, message = "Category order updated successfully" });
         }
 
         [HttpGet]

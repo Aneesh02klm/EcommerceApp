@@ -63,7 +63,8 @@ namespace Malieakal.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] Malieakal.Application.Models.ProductSearchQuery query)
         {
-            var products = await _productRepository.SearchAsync(query);
+            var products = (await _productRepository.SearchAsync(query)).ToList();
+            await ApplyCatalogPromotions(products);
             return Ok(new { success = true, data = products });
         }
 
@@ -79,7 +80,7 @@ namespace Malieakal.Api.Controllers
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound(new { success = false, message = "Product not found." });
-            
+            await ApplyCatalogPromotions(new[] { product });
             return Ok(new { success = true, data = product });
         }
 
@@ -88,7 +89,7 @@ namespace Malieakal.Api.Controllers
         {
             var product = await _productRepository.GetBySlugAsync(slug);
             if (product == null) return NotFound(new { success = false, message = "Product not found." });
-            
+            await ApplyCatalogPromotions(new[] { product });
             return Ok(new { success = true, data = product });
         }
 

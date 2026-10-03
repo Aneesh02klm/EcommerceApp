@@ -313,6 +313,21 @@ export default function AdminCouponsPage() {
                 <input type="datetime-local" value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} className="w-full border border-gray-200 rounded p-2 text-sm text-gray-600" />
               </div>
 
+              
+              <div className="flex items-center gap-3 bg-gray-50 p-4 border border-gray-200 rounded mt-4">
+                <label className="text-[11px] font-extrabold text-gray-700 uppercase tracking-widest flex-1">Coupon Status</label>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} />
+                      <div className={`block w-10 h-6 rounded-full transition-colors ${formData.isActive ? 'bg-amber-500' : 'bg-gray-300'}`}></div>
+                      <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.isActive ? 'transform translate-x-4' : ''}`}></div>
+                    </div>
+                  </label>
+                  <span className="text-xs font-bold w-16" style={{ color: formData.isActive ? '#f59e0b' : '#9ca3af' }}>{formData.isActive ? 'ACTIVE' : 'DISABLED'}</span>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
                 <Button variant="primary" type="submit">{editingCoupon ? "Save Changes" : "Generate & Assign"}</Button>

@@ -238,6 +238,21 @@ export default function CatalogPromotions() {
                   <input type="date" required value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
                 </div>
               </div>
+              
+              <div className="flex items-center gap-3 bg-gray-50 p-4 border border-gray-200 rounded">
+                <label className="text-[11px] font-extrabold text-gray-700 uppercase tracking-widest flex-1">Promotion Status</label>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} />
+                      <div className={`block w-10 h-6 rounded-full transition-colors ${formData.isActive ? 'bg-amber-500' : 'bg-gray-300'}`}></div>
+                      <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.isActive ? 'transform translate-x-4' : ''}`}></div>
+                    </div>
+                  </label>
+                  <span className="text-xs font-bold w-16" style={{ color: formData.isActive ? '#f59e0b' : '#9ca3af' }}>{formData.isActive ? 'ACTIVE' : 'DISABLED'}</span>
+                </div>
+              </div>
+
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-bold text-gray-500 uppercase tracking-widest">Cancel</button>
                 <button type="submit" className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-[#0B192C] text-sm font-extrabold uppercase tracking-widest rounded shadow-sm">Save Promotion</button>

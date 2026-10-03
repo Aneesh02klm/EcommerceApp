@@ -54,6 +54,28 @@ namespace Malieakal.Infrastructure.Repositories
             await connection.ExecuteAsync(sql, category);
         }
 
+        
+        public async Task UpdateDisplayOrderAsync(List<int> orderedCategoryIds)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                var sql = "UPDATE Categories SET DisplayOrder = @Order WHERE Id = @Id";
+                for (int i = 0; i < orderedCategoryIds.Count; i++)
+                {
+                    await connection.ExecuteAsync(sql, new { Order = i + 1, Id = orderedCategoryIds[i] }, transaction);
+                }
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
         public async Task DeleteAsync(int id)
         {
             using var connection = _connectionFactory.CreateConnection();

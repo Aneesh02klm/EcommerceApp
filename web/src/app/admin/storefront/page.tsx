@@ -45,248 +45,250 @@ interface SortableItemProps {
 }
 
 function SortableSection({ section, updateSection, categories, brands, products }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id });
-  const style = { transform: CSS.Transform.toString(transform), transition };
-
-  return (
-    <div ref={setNodeRef} style={style} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4 flex gap-4 relative">
-      <div {...attributes} {...listeners} className="cursor-grab pt-2 text-gray-400 hover:text-gray-600">
-        <GripVertical />
-      </div>
-      <div className="flex-1 space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="font-bold text-[#0B192C] capitalize">{section.id.replace('_', ' ')} <span className="text-xs text-gray-400 font-normal ml-2">({section.type})</span></h3>
-          <label className="flex items-center cursor-pointer">
-            <div className="relative">
-              <input type="checkbox" className="sr-only" checked={section.isActive} onChange={e => updateSection(section.id, { isActive: e.target.checked })} />
-              <div className={`block w-10 h-6 rounded-full transition-colors ${section.isActive ? 'bg-amber-500' : 'bg-gray-300'}`}></div>
-              <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${section.isActive ? 'transform translate-x-4' : ''}`}></div>
-            </div>
-          </label>
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id });
+    const style = { transform: CSS.Transform.toString(transform), transition };
+  
+    return (
+      <div ref={setNodeRef} style={style} className="bg-white border border-gray-200 rounded-lg shadow-sm p-5 mb-4 flex gap-5 relative group">
+        <div {...attributes} {...listeners} className="cursor-grab pt-2 text-gray-300 hover:text-amber-500 transition-colors">
+          <GripVertical />
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Main Title</label>
-            <input type="text" value={section.title} onChange={e => updateSection(section.id, { title: e.target.value })} className="w-full border border-gray-200 rounded p-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Subtitle</label>
-            <input type="text" value={section.subtitle} onChange={e => updateSection(section.id, { subtitle: e.target.value })} className="w-full border border-gray-200 rounded p-2 text-sm" />
-          </div>
-        </div>
-
-                {(section.type === 'HeroSlider' || section.type === 'DiscoverMore') && (
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Background Image</label>
-            <div className="flex items-center gap-4">
-                {section.imageUrl && (
-                    <img src={section.imageUrl.startsWith('http') ? section.imageUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}${section.imageUrl}`} className="h-20 w-32 object-cover border rounded" />
-                )}
-                <input type="file" accept="image/*" onChange={async e => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    try {
-                        const token = localStorage.getItem('token');
-                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}/api/v1/upload`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
-                        const json = await res.json();
-                        if (json.success) {
-                            updateSection(section.id, { imageUrl: json.data.url });
-                        }
-                    } catch (err) {
-                        console.error('Upload failed', err);
-                    }
-                }} className="text-sm" />
-            </div>
-          </div>
-        )}
-
-        {section.type === 'ContentBlock' && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Featured Visual (Right Side Image)</label>
-              <div className="flex items-center gap-4 bg-gray-50 p-4 border border-gray-200 rounded">
-                  {section.imageUrl ? (
-                      <div className="relative group">
-                        <img src={section.imageUrl.startsWith('http') ? section.imageUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}${section.imageUrl}`} className="h-32 w-32 object-cover border rounded bg-white shadow-sm" />
-                        <button onClick={() => updateSection(section.id, { imageUrl: '' })} className="absolute top-1 right-1 bg-red-500 text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
-                      </div>
-                  ) : (
-                      <div className="h-32 w-32 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded bg-white text-gray-400 text-xs text-center p-2">
-                        <span>No Image</span>
-                      </div>
-                  )}
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-gray-500 mb-2">Upload a high-quality visual to feature alongside your content.</span>
-                    <input type="file" accept="image/*" onChange={async e => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const formData = new FormData();
-                        formData.append('file', file);
-                        try {
-                            const token = localStorage.getItem('token');
-                            const uploadUrl = new URL(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}/api/v1/upload`);
-                            if (section.imageUrl) uploadUrl.searchParams.append('oldUrl', section.imageUrl);
-                            
-                            const res = await fetch(uploadUrl.toString(), {
-                                method: 'POST',
-                                headers: { 'Authorization': `Bearer ${token}` },
-                                body: formData
-                            });
-                            const json = await res.json();
-                            if (json.success) {
-                                updateSection(section.id, { imageUrl: json.data.url });
-                            }
-                        } catch (err) {
-                            console.error('Upload failed', err);
-                        }
-                    }} className="text-sm block w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer" />
-                  </div>
+        <div className="flex-1 space-y-6">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+            <h3 className="font-black text-lg text-[#0B192C] capitalize">{section.id.replace('_', ' ')} <span className="text-xs text-gray-400 font-bold ml-2 tracking-widest uppercase bg-gray-100 px-2 py-1 rounded">({section.type})</span></h3>
+            <label className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input type="checkbox" className="sr-only" checked={section.isActive} onChange={e => updateSection(section.id, { isActive: e.target.checked })} />
+                <div className={`block w-10 h-6 rounded-full transition-colors ${section.isActive ? 'bg-amber-500' : 'bg-gray-300'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${section.isActive ? 'transform translate-x-4' : ''}`}></div>
               </div>
+              <span className="ml-3 text-[10px] font-extrabold tracking-widest uppercase text-gray-500">{section.isActive ? 'Active' : 'Hidden'}</span>
+            </label>
+          </div>
+  
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Main Title</label>
+              <input type="text" value={section.title} onChange={e => updateSection(section.id, { title: e.target.value })} className="w-full border border-gray-300 rounded p-2.5 text-sm font-semibold focus:ring-1 focus:ring-amber-500 outline-none" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">HTML Content</label>
-              <RichTextEditor value={section.htmlContent || ''} onChange={(val: string) => updateSection(section.id, { htmlContent: val })} />
+              <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Subtitle (Optional)</label>
+              <input type="text" value={section.subtitle} onChange={e => updateSection(section.id, { subtitle: e.target.value })} className="w-full border border-gray-300 rounded p-2.5 text-sm font-semibold focus:ring-1 focus:ring-amber-500 outline-none" />
             </div>
           </div>
-        )}
-
-        {section.type === 'PreBookingForm' && (
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Description</label>
-            <textarea value={section.description || ''} onChange={e => updateSection(section.id, { description: e.target.value })} className="w-full border border-gray-200 rounded p-2 text-sm" rows={3}></textarea>
-          </div>
-        )}
-
-        {section.type === 'FeaturedCategories' && (
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Select Categories</label>
-            <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto p-2 border border-gray-200 rounded">
-               {categories.map(c => (
-                 <label key={c.id} className="flex items-center gap-2 text-sm whitespace-nowrap bg-gray-50 px-2 py-1 rounded border">
-                   <input type="checkbox" checked={(section.categoryIds || []).includes(c.id)} onChange={e => {
-                     const ids = section.categoryIds || [];
-                     updateSection(section.id, { categoryIds: e.target.checked ? [...ids, c.id] : ids.filter(i => i !== c.id) });
-                   }} /> {c.name}
-                 </label>
-               ))}
-            </div>
-          </div>
-        )}
-
-        {section.type === 'BrandPartners' && (
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Select Brands</label>
-            <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto p-2 border border-gray-200 rounded">
-               {brands.map(b => (
-                 <label key={b.id} className="flex items-center gap-2 text-sm whitespace-nowrap bg-gray-50 px-2 py-1 rounded border">
-                   <input type="checkbox" checked={(section.brandIds || []).includes(b.id)} onChange={e => {
-                     const ids = section.brandIds || [];
-                     updateSection(section.id, { brandIds: e.target.checked ? [...ids, b.id] : ids.filter(i => i !== b.id) });
-                   }} /> {b.name}
-                 </label>
-               ))}
-            </div>
-          </div>
-        )}
-
-        {section.type === 'ProductGrid' && (() => {
-            const t = (section.title || '').toLowerCase();
-            const isLightning = t.includes('lightning') || t.includes('deal') || t.includes('offer');
-            const isNewArrivals = t.includes('new') || t.includes('arrival');
-            const isBestSellers = t.includes('best') || t.includes('seller') || t.includes('top');
-            
-            return (
-            <div className="space-y-4">
-              <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">
-                <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Selection Mode ({isLightning ? 'Lightning Deals' : isNewArrivals ? 'New Arrivals' : isBestSellers ? 'Best Sellers' : 'Generic Grid'})</label>
-                <select value={section.queryType || 'Manual'} onChange={e => updateSection(section.id, { queryType: e.target.value, bestSellerLogic: '', minDiscountThreshold: 20, newArrivalsDate: '' })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none font-semibold text-[#0B192C]">
-                  <option value="Manual">Manual Selection</option>
-                  {isLightning && <option value="LightningDeals">Automated by Discount Percentage</option>}
-                  {isNewArrivals && <option value="NewArrivals">Automated by Date</option>}
-                  {isBestSellers && <option value="BestSellers">Automated by Sales</option>}
-                  {(!isLightning && !isNewArrivals && !isBestSellers) && (
-                      <>
-                          <option value="NewArrivals">Automated: New Arrivals</option>
-                          <option value="BestSellers">Automated: Best Sellers</option>
-                          <option value="LightningDeals">Automated: Lightning Deals</option>
-                      </>
+  
+          {(section.type === 'HeroSlider' || section.type === 'DiscoverMore') && (
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+              <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Background Image</label>
+              <div className="flex items-center gap-4">
+                  {section.imageUrl && (
+                      <img src={section.imageUrl.startsWith('http') ? section.imageUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}${section.imageUrl}`} className="h-20 w-32 object-cover border border-gray-300 rounded shadow-sm bg-white" />
                   )}
-                </select>
+                  <input type="file" accept="image/*" onChange={async e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      try {
+                          const token = localStorage.getItem('token');
+                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}/api/v1/upload`, {
+                              method: 'POST',
+                              headers: { 'Authorization': `Bearer ${token}` },
+                              body: formData
+                          });
+                          const json = await res.json();
+                          if (json.success) {
+                              updateSection(section.id, { imageUrl: json.data.url });
+                          }
+                      } catch (err) {
+                          console.error('Upload failed', err);
+                      }
+                  }} className="text-sm block w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer" />
               </div>
-              
-              {section.queryType === 'LightningDeals' && isLightning && (
-                  <div className="flex gap-4 bg-gray-50 p-3 rounded border border-gray-200 mt-2">
-                    <div className="w-1/2">
-                      <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Minimum Discount Threshold (%)</label>
-                      <input type="number" min="0" max="100" value={section.minDiscountThreshold ?? 20} onChange={e => updateSection(section.id, { minDiscountThreshold: parseInt(e.target.value) || 0 })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none" />
-                    </div>
-                  </div>
-              )}
-
-              {section.queryType === 'NewArrivals' && isNewArrivals && (
-                  <div className="flex gap-4 bg-gray-50 p-3 rounded border border-gray-200 mt-2">
-                    <div className="w-1/2">
-                      <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Products Added After (Date)</label>
-                      <input type="date" value={section.newArrivalsDate || ''} onChange={e => updateSection(section.id, { newArrivalsDate: e.target.value })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none" />
-                    </div>
-                  </div>
-              )}
-
-              {section.queryType === 'BestSellers' && isBestSellers && (
-                  <div className="flex gap-4 bg-gray-50 p-3 rounded border border-gray-200 mt-2">
-                    <div className="flex-1">
-                      <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Best Seller Logic</label>
-                      <select value={section.bestSellerLogic || 'Hybrid'} onChange={e => updateSection(section.id, { bestSellerLogic: e.target.value })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none">
-                        <option value="Manual Only">Manual Only (IsBestSeller Flag)</option>
-                        <option value="Automated by Sales">Automated by Sales Volume</option>
-                        <option value="Hybrid">Hybrid (Flag + Sales)</option>
-                      </select>
-                    </div>
-                    {section.bestSellerLogic !== 'Manual Only' && (
-                      <div className="w-1/3">
-                        <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Min Sales Threshold</label>
-                        <input type="number" min="0" value={section.minSalesThreshold ?? 50} onChange={e => updateSection(section.id, { minSalesThreshold: parseInt(e.target.value) || 0 })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white focus:ring-1 outline-none" />
-                      </div>
+            </div>
+          )}
+  
+          {section.type === 'ContentBlock' && (
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+              <div className="md:col-span-4 flex flex-col">
+                <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Featured Visual (Right Side)</label>
+                <div className="flex-1 flex flex-col items-center gap-4 bg-gray-50 p-4 border border-gray-200 rounded-lg">
+                    {section.imageUrl ? (
+                        <div className="relative group w-full aspect-square max-h-48">
+                          <img src={section.imageUrl.startsWith('http') ? section.imageUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}${section.imageUrl}`} className="w-full h-full object-cover border border-gray-300 rounded shadow-sm bg-white" />
+                          <button onClick={() => updateSection(section.id, { imageUrl: '' })} className="absolute top-2 right-2 bg-red-500 text-white rounded p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow"><Trash2 size={16}/></button>
+                        </div>
+                    ) : (
+                        <div className="w-full aspect-square max-h-48 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded bg-white text-gray-400 text-xs text-center p-4">
+                          <span>No Image Provided</span>
+                        </div>
                     )}
-                  </div>
-                )}
-                
-              {(!section.queryType || section.queryType === 'Manual') ? (
-                  <div>
-                    <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Select Products</label>
-                    <div className="flex gap-2 flex-wrap max-h-48 overflow-y-auto p-2 border border-gray-200 rounded bg-white">
-                       {products.map(p => (
-                         <label key={p.id} className="flex items-center gap-2 text-xs whitespace-nowrap bg-gray-50 px-2 py-1 rounded border">
-                           <input type="checkbox" checked={(section.productIds || []).includes(p.id)} onChange={e => {
-                             const ids = section.productIds || [];
-                             updateSection(section.id, { productIds: e.target.checked ? [...ids, p.id] : ids.filter(i => i !== p.id) });
-                           }} /> {p.name.substring(0, 30)}...
-                         </label>
-                       ))}
+                    <div className="w-full mt-auto">
+                      <input type="file" accept="image/*" onChange={async e => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          try {
+                              const token = localStorage.getItem('token');
+                              const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}/api/v1/upload`, {
+                                  method: 'POST',
+                                  headers: { 'Authorization': `Bearer ${token}` },
+                                  body: formData
+                              });
+                              const json = await res.json();
+                              if (json.success) {
+                                  updateSection(section.id, { imageUrl: json.data.url });
+                              }
+                          } catch (err) {
+                              console.error('Upload failed', err);
+                          }
+                      }} className="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer" />
                     </div>
-                  </div>
-              ) : (
-                  <div>
-                    <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Max Items to Display</label>
-                    <input type="number" min="1" max="24" value={section.maxItems || 4} onChange={e => updateSection(section.id, { maxItems: parseInt(e.target.value) || 4 })} className="w-full border border-gray-300 rounded p-2 text-sm bg-white" />
-                  </div>
-              )}
+                </div>
+              </div>
+              <div className="md:col-span-8 flex flex-col">
+                <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">HTML Content</label>
+                <div className="flex-1 bg-white border border-gray-200 rounded-lg overflow-hidden min-h-[250px]">
+                  <RichTextEditor value={section.htmlContent || ''} onChange={(val: string) => updateSection(section.id, { htmlContent: val })} />
+                </div>
+              </div>
             </div>
-            );
-          })()}
+          )}
+  
+          {section.type === 'PreBookingForm' && (
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+              <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Description</label>
+              <textarea value={section.description || ''} onChange={e => updateSection(section.id, { description: e.target.value })} className="w-full border border-gray-300 rounded p-2.5 text-sm font-semibold focus:ring-1 focus:ring-amber-500 outline-none" rows={3}></textarea>
+            </div>
+          )}
+  
+          {section.type === 'FeaturedCategories' && (
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+              <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Target Categories</label>
+              <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto p-3 border border-gray-300 rounded bg-white shadow-inner custom-scrollbar">
+                 {categories.map(c => (
+                   <label key={c.id} className="flex items-center gap-2 text-xs font-semibold whitespace-nowrap bg-gray-50 px-2.5 py-1.5 rounded border border-gray-200 cursor-pointer hover:bg-gray-100">
+                     <input type="checkbox" checked={(section.categoryIds || []).includes(c.id)} onChange={e => {
+                       const ids = section.categoryIds || [];
+                       updateSection(section.id, { categoryIds: e.target.checked ? [...ids, c.id] : ids.filter(i => i !== c.id) });
+                     }} className="rounded text-amber-500 focus:ring-amber-500" /> {c.name}
+                   </label>
+                 ))}
+              </div>
+            </div>
+          )}
+  
+          {section.type === 'BrandPartners' && (
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+              <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Select Brands</label>
+              <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto p-3 border border-gray-300 rounded bg-white shadow-inner custom-scrollbar">
+                 {brands.map(b => (
+                   <label key={b.id} className="flex items-center gap-2 text-xs font-semibold whitespace-nowrap bg-gray-50 px-2.5 py-1.5 rounded border border-gray-200 cursor-pointer hover:bg-gray-100">
+                     <input type="checkbox" checked={(section.brandIds || []).includes(b.id)} onChange={e => {
+                       const ids = section.brandIds || [];
+                       updateSection(section.id, { brandIds: e.target.checked ? [...ids, b.id] : ids.filter(i => i !== b.id) });
+                     }} className="rounded text-amber-500 focus:ring-amber-500" /> {b.name}
+                   </label>
+                 ))}
+              </div>
+            </div>
+          )}
+  
+          {section.type === 'ProductGrid' && (() => {
+              const t = (section.title || '').toLowerCase();
+              const isLightning = t.includes('lightning') || t.includes('deal') || t.includes('offer');
+              const isNewArrivals = t.includes('new') || t.includes('arrival');
+              const isBestSellers = t.includes('best') || t.includes('seller') || t.includes('top');
+              
+              return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                  <div className="md:col-span-8 bg-amber-50 border border-amber-200 p-4 rounded-lg flex flex-col justify-center">
+                    <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-2">Selection Mode ({isLightning ? 'Lightning Deals' : isNewArrivals ? 'New Arrivals' : isBestSellers ? 'Best Sellers' : 'Generic Grid'})</label>
+                    <select value={section.queryType || 'Manual'} onChange={e => updateSection(section.id, { queryType: e.target.value, bestSellerLogic: '', minDiscountThreshold: 20, newArrivalsDate: '' })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold text-[#0B192C]">
+                      <option value="Manual">Manual Selection</option>
+                      {isLightning && <option value="LightningDeals">Automated by Discount Percentage</option>}
+                      {isNewArrivals && <option value="NewArrivals">Automated by Date</option>}
+                      {isBestSellers && <option value="BestSellers">Automated by Sales</option>}
+                      {(!isLightning && !isNewArrivals && !isBestSellers) && (
+                          <>
+                              <option value="NewArrivals">Automated: New Arrivals</option>
+                              <option value="BestSellers">Automated: Best Sellers</option>
+                              <option value="LightningDeals">Automated: Lightning Deals</option>
+                          </>
+                      )}
+                    </select>
+                  </div>
+                  
+                  {section.queryType && section.queryType !== 'Manual' && (
+                    <div className="md:col-span-4 bg-gray-50 border border-gray-200 p-4 rounded-lg flex flex-col justify-center">
+                      <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-2">Max Items</label>
+                      <input type="number" min="1" max="24" value={section.maxItems || 4} onChange={e => updateSection(section.id, { maxItems: parseInt(e.target.value) || 4 })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold" />
+                    </div>
+                  )}
+                </div>
+                
+                {section.queryType === 'LightningDeals' && isLightning && (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                      <div className="md:col-span-4 bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                        <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Minimum Discount (%)</label>
+                        <input type="number" min="0" max="100" value={section.minDiscountThreshold ?? 20} onChange={e => updateSection(section.id, { minDiscountThreshold: parseInt(e.target.value) || 0 })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold" />
+                      </div>
+                    </div>
+                )}
+  
+                {section.queryType === 'NewArrivals' && isNewArrivals && (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                      <div className="md:col-span-5 bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                        <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Products Added After (Date)</label>
+                        <input type="date" value={section.newArrivalsDate || ''} onChange={e => updateSection(section.id, { newArrivalsDate: e.target.value })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold text-gray-700" />
+                      </div>
+                    </div>
+                )}
+  
+                {section.queryType === 'BestSellers' && isBestSellers && (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                      <div className="md:col-span-8 bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                        <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Best Seller Logic</label>
+                        <select value={section.bestSellerLogic || 'Hybrid'} onChange={e => updateSection(section.id, { bestSellerLogic: e.target.value })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold">
+                          <option value="Manual Only">Manual Only (IsBestSeller Flag)</option>
+                          <option value="Automated by Sales">Automated by Sales Volume</option>
+                          <option value="Hybrid">Hybrid (Flag + Sales)</option>
+                        </select>
+                      </div>
+                      {section.bestSellerLogic !== 'Manual Only' && (
+                        <div className="md:col-span-4 bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                          <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Min Sales Threshold</label>
+                          <input type="number" min="0" value={section.minSalesThreshold ?? 50} onChange={e => updateSection(section.id, { minSalesThreshold: parseInt(e.target.value) || 0 })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                {(!section.queryType || section.queryType === 'Manual') && (
+                    <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                      <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-2">Select Specific Products</label>
+                      <div className="flex gap-2 flex-wrap max-h-48 overflow-y-auto p-3 border border-gray-300 rounded bg-white shadow-inner custom-scrollbar">
+                         {products.map(p => (
+                           <label key={p.id} className="flex items-center gap-2 text-xs font-semibold whitespace-nowrap bg-gray-50 px-3 py-1.5 rounded border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors shadow-sm">
+                             <input type="checkbox" checked={(section.productIds || []).includes(p.id)} onChange={e => {
+                               const ids = section.productIds || [];
+                               updateSection(section.id, { productIds: e.target.checked ? [...ids, p.id] : ids.filter(i => i !== p.id) });
+                             }} className="rounded text-amber-500 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer" /> {p.name.substring(0, 35)}{p.name.length > 35 ? '...' : ''}
+                           </label>
+                         ))}
+                      </div>
+                    </div>
+                )}
+              </div>
+              );
+            })()}
+        </div>
       </div>
-
-    </div>
-  );
-}
-
+    );
+  }
+  
 export default function AdminStorefrontPage() {
   const { token } = useAuthStore();
   const [sections, setSections] = useState<SectionConfig[]>([]);
