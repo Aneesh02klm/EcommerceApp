@@ -41,17 +41,21 @@ namespace Malieakal.Api.Controllers
         public async Task<IActionResult> GetPublicHomepage([FromQuery] string? mode = null)
         {
             var config = mode == "draft" ? await _storefrontRepo.GetDraftConfigAsync() : await _storefrontRepo.GetPublishedConfigAsync();
+            var hydratedNode = await HydrateConfigInternalAsync(config);
+            return Ok(new { success = true, data = hydratedNode ?? JsonNode.Parse(config.GetRawText()) });
+        }
+
+        private async Task<JsonNode?> HydrateConfigInternalAsync(System.Text.Json.JsonElement config)
+        {
             var jsonNode = JsonNode.Parse(config.GetRawText());
-            
-            if (jsonNode == null || jsonNode["sections"] == null)
-                return Ok(new { success = true, data = config });
+            if (jsonNode == null || jsonNode["sections"] == null) return null;
 
             var sectionsArray = jsonNode["sections"] as JsonArray;
-            if (sectionsArray == null) return Ok(new { success = true, data = config });
+            if (sectionsArray == null) return null;
 
             var allCategories = await _categoryRepo.GetAllAsync();
             var allBrands = await _brandRepo.GetAllAsync();
-            var allProducts = await _productRepo.GetAllAsync(); // For small catalog this is fine. Ideally we use a query.
+            var allProducts = await _productRepo.GetAllAsync();
 
             foreach (var section in sectionsArray)
             {
@@ -114,8 +118,7 @@ namespace Malieakal.Api.Controllers
                     }
                 }
             }
-
-            return Ok(new { success = true, data = jsonNode });
+            return jsonNode;
         }
 
         [HttpGet("admin/config")]
@@ -140,7 +143,10 @@ namespace Malieakal.Api.Controllers
         public async Task<IActionResult> PublishConfig()
         {
             await _storefrontRepo.PublishConfigAsync();
-            await _hubContext.Clients.All.SendAsync("ReceiveLayoutUpdate");
+            var newConfig = await _storefrontRepo.GetPublishedConfigAsync();
+            var hydratedNode = await HydrateConfigInternalAsync(newConfig);
+            
+            await _hubContext.Clients.All.SendAsync("ReceiveLayoutUpdate", hydratedNode ?? JsonNode.Parse(newConfig.GetRawText()));
             return Ok(new { success = true });
         }
 

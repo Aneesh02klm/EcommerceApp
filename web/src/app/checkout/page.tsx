@@ -312,6 +312,8 @@ export default function CheckoutPage() {
   const [deliveryCharge, setDeliveryCharge] = useState(0);
   const [deliveryChecking, setDeliveryChecking] = useState(false);
   const [deliveryError, setDeliveryError] = useState('');
+  const [stockError, setStockError] = useState<{productName: string} | null>(null);
+  const [priceError, setPriceError] = useState<{oldTotal: number, newTotal: number} | null>(null);
 
   // Unified Final Payable Amount
   const finalPayableAmount = Math.max(0, finalTotal + deliveryCharge - (promoDiscount || 0));
@@ -630,7 +632,8 @@ export default function CheckoutPage() {
 
   // ── Place Order ───────────────────────────────────────────────────────────
 
-  const handlePlaceOrder = useCallback(async () => {
+  const handlePlaceOrder = useCallback(async (ignorePriceChange: boolean | React.MouseEvent = false) => {
+    const isIgnore = typeof ignorePriceChange === 'boolean' ? ignorePriceChange : false;
     // Validate address selection
     if (!selectedAddressId && !showAddressForm) {
       toast.error('Please select or add a delivery address.');
@@ -1203,6 +1206,43 @@ export default function CheckoutPage() {
         confirmText="Delete"
         cancelText="Cancel"
       />
+      {/* OUT OF STOCK MODAL */}
+      {stockError && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded p-6 max-w-sm w-full shadow-2xl border-t-4 border-red-500">
+            <h3 className="text-lg font-black text-[#0B192C] mb-2 uppercase tracking-tight">Out of Stock</h3>
+            <p className="text-sm text-gray-600 mb-6">We're sorry, but <strong className="text-gray-900">{stockError.productName}</strong> has just gone out of stock. Please remove it from your cart to continue.</p>
+            <Button variant="outline" className="w-full font-bold border-gray-300 text-gray-700" onClick={() => setStockError(null)}>
+              Review Cart
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* PRICE CHANGED MODAL */}
+      {priceError && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded p-6 max-w-sm w-full shadow-2xl border-t-4 border-amber-500">
+            <h3 className="text-lg font-black text-[#0B192C] mb-2 uppercase tracking-tight">Price Updated</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              The price of an item in your cart has changed since you started checkout. 
+              Your total has updated from <strong className="text-red-600 line-through">₹{priceError.oldTotal.toLocaleString('en-IN')}</strong> to <strong className="text-green-600">₹{priceError.newTotal.toLocaleString('en-IN')}</strong>.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 font-bold border-gray-300 text-gray-700" onClick={() => setPriceError(null)}>
+                Cancel
+              </Button>
+              <Button className="flex-1 font-bold bg-amber-500 hover:bg-amber-600 text-[#0B192C]" onClick={() => {
+                setPriceError(null);
+                handlePlaceOrder(true);
+              }}>
+                Confirm New Price
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

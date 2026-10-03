@@ -11,12 +11,23 @@ export function SignalRListener() {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030'}/hubs/storefront`)
       .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.None)
       .build();
 
-    connection.start().catch((err: any) => console.error('SignalR Connection Error: ', err));
+    connection.start().catch((err: any) => {
+      if (err.message && err.message.includes('stopped during negotiation')) return; // Ignore React 18 StrictMode unmounts
+      console.error('SignalR Connection Error: ', err);
+    });
 
-    connection.on('ReceiveLayoutUpdate', () => {
-      console.log('Received live layout update from CMS. Refreshing UI natively...');
+    
+
+        connection.on('ProductUpdated', (data: any) => {
+      console.log('Product updated dynamically:', data);
+      
+      import('@/store/cartStore').then(({ useCartStore }) => {
+        useCartStore.getState().initFromBackend();
+      });
+
       startTransition(() => {
         router.refresh();
       });

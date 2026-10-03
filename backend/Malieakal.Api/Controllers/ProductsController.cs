@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Malieakal.Api.Controllers
 {
@@ -13,11 +14,13 @@ namespace Malieakal.Api.Controllers
     {
         private readonly IProductRepository _productRepository;
         private readonly IFileService _fileService;
+        private readonly Microsoft.AspNetCore.SignalR.IHubContext<Malieakal.Api.Hubs.StorefrontHub> _hubContext;
 
-        public ProductsController(IProductRepository productRepository, IFileService fileService)
+        public ProductsController(IProductRepository productRepository, IFileService fileService, Microsoft.AspNetCore.SignalR.IHubContext<Malieakal.Api.Hubs.StorefrontHub> hubContext)
         {
             _productRepository = productRepository;
             _fileService = fileService;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -140,6 +143,7 @@ namespace Malieakal.Api.Controllers
             if (product.Images.Count > 0) product.ImageUrl = product.Images[0].ImageUrl;
 
             await _productRepository.UpdateAsync(product);
+            await _hubContext.Clients.All.SendAsync("ProductUpdated", new { ProductId = product.Id, Price = product.FinalPrice, Stock = product.Stock, IsActive = product.IsActive });
             return Ok(new { success = true, data = product });
         }
 

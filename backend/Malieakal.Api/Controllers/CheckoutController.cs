@@ -204,8 +204,19 @@ namespace Malieakal.Api.Controllers
                 var p = await _productRepository.GetByIdAsync(item.ProductId);
                 if (p == null || p.Stock < item.Quantity)
                 {
-                    return BadRequest(new { success = false, message = $"Sorry, '{item.Product?.Name ?? "an item"}' is out of stock or does not have enough quantity available." });
+                    return StatusCode(409, new { success = false, errorType = "OUT_OF_STOCK", productName = item.Product?.Name ?? "an item" });
                 }
+            }
+
+            var realTotal = cart.FinalTotal + deliveryCharge - promoDiscount;
+            if (request.ExpectedFinalTotal.HasValue && Math.Abs(realTotal - request.ExpectedFinalTotal.Value) > 0.01m)
+            {
+                return StatusCode(409, new { 
+                    success = false, 
+                    errorType = "PRICE_CHANGED", 
+                    oldTotal = request.ExpectedFinalTotal.Value, 
+                    newTotal = realTotal 
+                });
             }
 
             var order = new Order
@@ -350,6 +361,7 @@ namespace Malieakal.Api.Controllers
         public int? AddressId { get; set; } // nullable: if null, use inline address
         public string? EmailAddress { get; set; }
         public string PaymentMethod { get; set; } = "Razorpay"; // "Razorpay" or "COD"
+        public decimal? ExpectedFinalTotal { get; set; }
         public string? PromoCode { get; set; }
         public List<CheckoutCartItem>? Items { get; set; } // For guest checkout
 
