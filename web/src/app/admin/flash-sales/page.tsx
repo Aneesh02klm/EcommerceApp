@@ -168,8 +168,8 @@ export default function FlashSalesPage() {
           No active flash sales scheduled.
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <table className="w-full text-left text-sm">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
+        <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="px-6 py-4">Title</th>

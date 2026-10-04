@@ -127,8 +127,8 @@ export default function AdminBrandsPage() {
       {loading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-amber-500" size={32} /></div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <table className="w-full text-left text-sm whitespace-nowrap">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
+        <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-4">ID</th>

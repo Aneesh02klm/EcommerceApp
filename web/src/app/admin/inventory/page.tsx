@@ -82,7 +82,7 @@ export default function AdminInventoryPage() {
       {loading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-amber-500" size={32} /></div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">

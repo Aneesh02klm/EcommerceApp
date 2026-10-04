@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Check, ChevronRight } from 'lucide-react';
+import { Check, ChevronRight, X, SlidersHorizontal } from 'lucide-react';
 
 interface FilterSidebarProps {
   categories: any[];
@@ -12,6 +12,7 @@ interface FilterSidebarProps {
 }
 
 export function FilterSidebar({ categories, brands, activeCategoryId, currentCategorySlug = '', facets }: FilterSidebarProps) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -97,7 +98,28 @@ export function FilterSidebar({ categories, brands, activeCategoryId, currentCat
   const getPercent = (value: number) => Math.round(((value - ABSOLUTE_MIN) / (ABSOLUTE_MAX - ABSOLUTE_MIN)) * 100) || 0;
 
   return (
-    <aside className="w-56 flex-shrink-0 hidden lg:block bg-white p-6 rounded-lg border border-gray-100 shadow-sm self-start">
+    <>
+      {/* Mobile Trigger */}
+      <button 
+        onClick={() => setIsMobileOpen(true)}
+        className="lg:hidden fixed bottom-[72px] right-4 z-40 bg-[#0B192C] text-white px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs uppercase tracking-widest"
+      >
+        <SlidersHorizontal size={14} /> Filters
+      </button>
+
+      {/* Backdrop */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 lg:hidden" onClick={() => setIsMobileOpen(false)} />
+      )}
+
+      {/* Sidebar Content */}
+      <aside className={`shrink-0 bg-white lg:bg-white fixed lg:relative top-0 left-0 h-full lg:h-auto w-[280px] z-50 lg:z-0 p-6 overflow-y-auto lg:overflow-visible transition-transform duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} rounded-none lg:rounded-lg border-r lg:border border-gray-100 shadow-2xl lg:shadow-sm self-start`}>
+        <div className="lg:hidden flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+          <h3 className="text-xl font-black text-[#0B192C]">Filters</h3>
+          <button onClick={() => setIsMobileOpen(false)} className="text-gray-400 hover:text-black">
+             <X size={24} />
+          </button>
+        </div>
       <style dangerouslySetInnerHTML={{__html: `
         .dual-slider::-webkit-slider-thumb {
           pointer-events: auto;
@@ -265,5 +287,6 @@ export function FilterSidebar({ categories, brands, activeCategoryId, currentCat
         </>
       )}
     </aside>
+    </>
   );
 }

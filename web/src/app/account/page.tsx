@@ -87,44 +87,49 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* Profile Header Card */}
-      <div className="bg-white rounded-md shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-start md:items-center justify-between">
-        <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+      <div className="bg-white rounded-2xl md:rounded-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:shadow-sm border border-gray-100/50 md:border-gray-100 p-6 md:p-6 flex flex-col md:flex-row items-center md:items-center justify-between text-center md:text-left gap-5 md:gap-0 relative overflow-hidden">
+        {/* Mobile decorative background blob */}
+        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#FDF9F1] to-white md:hidden opacity-50 z-0"></div>
+        
+        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-5 z-10 w-full">
+          <div className="w-20 h-20 md:w-16 md:h-16 rounded-full overflow-hidden bg-gray-50 border-4 border-white shadow-sm flex-shrink-0">
             {user.avatarUrl ? (
               <img src={`http://localhost:5030${user.avatarUrl}`} alt={user.firstName} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                <svg className="w-8 h-8" fill="currentColor" viewBox="00 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.97700112.004 15c4.9040 9.26 2.354 11.996 5.993zM16.002 8.999a4 40 11-80 4 400180z" /></svg>
+              <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
+                <svg className="w-10 h-10 md:w-8 md:h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               </div>
             )}
           </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-[#0B192C]">{user.firstName} {user.lastName}</h1>
-            <p className="text-xs text-gray-500 font-semibold mt-0.5">{user.email} | {user.phone}</p>
-            <p className="text-[10px] text-amber-600 font-extrabold mt-1.5 uppercase tracking-wider">{user.memberTier} MEMBER SINCE {memberSince}</p>
+          <div className="flex flex-col items-center md:items-start w-full">
+            <h1 className="text-2xl md:text-xl font-extrabold text-[#0B192C]">{user.firstName} {user.lastName}</h1>
+            <p className="text-xs text-gray-500 font-semibold mt-1">{user.email} <span className="hidden md:inline">|</span><span className="block md:hidden h-0.5"></span> {user.phone}</p>
+            <div className="mt-3 md:mt-1.5 inline-flex md:block items-center justify-center px-3 py-1 md:p-0 bg-amber-50 md:bg-transparent rounded-full border border-amber-100 md:border-none">
+              <p className="text-[10px] text-amber-600 font-extrabold uppercase tracking-wider">{user.memberTier} MEMBER SINCE {memberSince}</p>
+            </div>
           </div>
         </div>
-        <button className="mt-4 md:mt-0 px-4 py-2 border border-gray-200 rounded text-[11px] font-extrabold text-[#0B192C] hover:bg-gray-50 uppercase tracking-widest transition-colors">
+        <button className="w-full md:w-auto mt-2 md:mt-0 px-6 py-3 md:py-2 bg-white md:bg-transparent shadow-sm md:shadow-none border border-gray-200 rounded-xl md:rounded text-[11px] font-extrabold text-[#0B192C] hover:bg-gray-50 uppercase tracking-widest transition-colors z-10">
           Edit Profile
         </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-md shadow-sm border border-gray-100 p-5">
-          <p className="text-xs text-gray-500 font-bold mb-1">Total Orders</p>
-          <p className="text-2xl font-extrabold text-[#0B192C] mb-1">{stats.totalOrders}</p>
-          <p className="text-[10px] text-gray-400 font-semibold">Lifetime orders placed</p>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+        <div className="bg-white rounded-xl md:rounded-md shadow-[0_4px_20px_rgb(0,0,0,0.03)] md:shadow-sm border border-gray-100/50 md:border-gray-100 p-4 md:p-5 flex flex-col justify-center items-center md:items-start text-center md:text-left">
+          <p className="text-[11px] md:text-xs text-gray-500 font-bold mb-1 uppercase md:normal-case tracking-wider md:tracking-normal">Total Orders</p>
+          <p className="text-3xl md:text-2xl font-black md:font-extrabold text-[#0B192C] mb-1">{stats.totalOrders}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-semibold hidden md:block">Lifetime orders placed</p>
         </div>
-        <div className="bg-white rounded-md shadow-sm border border-gray-100 p-5">
-          <p className="text-xs text-gray-500 font-bold mb-1">Unused Coupons</p>
-          <p className="text-2xl font-extrabold text-[#0B192C] mb-1">{stats.unusedCoupons} Available</p>
-          <p className="text-[10px] text-gray-400 font-semibold">Redeem at checkout</p>
+        <div className="bg-white rounded-xl md:rounded-md shadow-[0_4px_20px_rgb(0,0,0,0.03)] md:shadow-sm border border-gray-100/50 md:border-gray-100 p-4 md:p-5 flex flex-col justify-center items-center md:items-start text-center md:text-left">
+          <p className="text-[11px] md:text-xs text-gray-500 font-bold mb-1 uppercase md:normal-case tracking-wider md:tracking-normal">Unused Coupons</p>
+          <p className="text-3xl md:text-2xl font-black md:font-extrabold text-[#0B192C] mb-1">{stats.unusedCoupons}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-semibold hidden md:block">Redeem at checkout</p>
         </div>
-        <div className="bg-white rounded-md shadow-sm border border-gray-100 p-5">
-          <p className="text-xs text-gray-500 font-bold mb-1">Reward Points</p>
-          <p className="text-2xl font-extrabold text-[#0B192C] mb-1">0 pts</p>
-          <p className="text-[10px] text-gray-400 font-semibold">Earn more by shopping</p>
+        <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-[#0B192C] to-[#1a2b45] md:bg-none md:bg-white rounded-xl md:rounded-md shadow-[0_4px_20px_rgb(0,0,0,0.08)] md:shadow-sm border border-transparent md:border-gray-100 p-5 md:p-5 flex flex-col justify-center items-center md:items-start text-center md:text-left">
+          <p className="text-[11px] md:text-xs text-gray-300 md:text-gray-500 font-bold mb-1 uppercase md:normal-case tracking-wider md:tracking-normal">Reward Points</p>
+          <p className="text-3xl md:text-2xl font-black md:font-extrabold text-amber-400 md:text-[#0B192C] mb-1">0 <span className="text-sm font-bold opacity-75">pts</span></p>
+          <p className="text-[10px] text-gray-400 font-semibold hidden md:block">Earn more by shopping</p>
         </div>
       </div>
 
@@ -163,22 +168,22 @@ export default function ProfilePage() {
       {/* Quick Shortcuts */}
       <div>
         <h2 className="text-sm font-extrabold text-[#0B192C] mb-3">Quick Shortcuts</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white rounded-md shadow-sm border border-gray-100 p-5 flex flex-col items-start hover:border-gray-300 transition-colors cursor-pointer">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+          <div className="bg-white rounded-xl md:rounded-md shadow-[0_4px_20px_rgb(0,0,0,0.03)] md:shadow-sm border border-gray-100/50 md:border-gray-100 p-4 md:p-5 flex flex-col items-center text-center md:items-start md:text-left hover:border-gray-300 transition-colors cursor-pointer">
             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3 text-gray-600 border border-gray-200">
               <Truck size={20} />
             </div>
             <h3 className="text-[11px] font-extrabold text-[#0B192C] mb-1">Track Current Order</h3>
             <p className="text-[10px] text-gray-400 font-semibold leading-tight">Track shipment to Kollam</p>
           </div>
-          <div className="bg-white rounded-md shadow-sm border border-gray-100 p-5 flex flex-col items-start hover:border-gray-300 transition-colors cursor-pointer">
+          <div className="bg-white rounded-xl md:rounded-md shadow-[0_4px_20px_rgb(0,0,0,0.03)] md:shadow-sm border border-gray-100/50 md:border-gray-100 p-4 md:p-5 flex flex-col items-center text-center md:items-start md:text-left hover:border-gray-300 transition-colors cursor-pointer">
             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3 text-gray-600 border border-gray-200">
               <Ticket size={20} />
             </div>
             <h3 className="text-[11px] font-extrabold text-[#0B192C] mb-1">My Special Rewards</h3>
             <p className="text-[10px] text-gray-400 font-semibold leading-tight">Scratch &amp; Win coupons</p>
           </div>
-          <div className="bg-white rounded-md shadow-sm border border-gray-100 p-5 flex flex-col items-start hover:border-gray-300 transition-colors cursor-pointer">
+          <div className="col-span-2 md:col-span-1 bg-white rounded-xl md:rounded-md shadow-[0_4px_20px_rgb(0,0,0,0.03)] md:shadow-sm border border-gray-100/50 md:border-gray-100 p-4 md:p-5 flex flex-col items-center text-center md:items-start md:text-left hover:border-gray-300 transition-colors cursor-pointer">
             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3 text-gray-600 border border-gray-200">
               <Phone size={20} />
             </div>

@@ -44,7 +44,7 @@ const menuStructure = [
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () => void }) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<string[]>(['Products', 'Marketing']);
 
@@ -53,7 +53,14 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className="w-[260px] bg-[#0B1526] text-[#A0AABF] flex flex-col h-screen fixed top-0 left-0 border-r border-[#1a2639] overflow-y-auto custom-scrollbar">
+    <>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+          onClick={onClose} 
+        />
+      )}
+      <aside className="w-[260px] bg-[#0B1526] text-[#A0AABF] flex flex-col h-screen fixed top-0 left-0 border-r border-[#1a2639] overflow-y-auto custom-scrollbar">
       
       {/* Brand Header */}
       <div className="p-6 pb-8 border-b border-[#1a2639]">
@@ -130,5 +137,6 @@ export function AdminSidebar() {
         <p className="text-[10px] text-[#5e6b82] font-medium text-center">v2.6.4 â€¢ Kollam Hub</p>
       </div>
     </aside>
+    </>
   );
 }

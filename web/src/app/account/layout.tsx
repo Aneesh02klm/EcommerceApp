@@ -54,9 +54,10 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         </div>
 
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Sidebar */}
-          <aside className="w-full md:w-64 flex-shrink-0">
-            <div className="bg-white rounded-md shadow-sm border border-gray-100 py-3">
+          {/* Sidebar Navigation */}
+          <aside className="w-full md:w-64 flex-shrink-0 md:mb-0 mb-2">
+            {/* Desktop Navigation */}
+            <div className="hidden md:block bg-white rounded-md shadow-sm border border-gray-100 py-3">
               <nav className="flex flex-col">
                 {menuItems.map((item) => {
                   const isActive = pathname === item.href;
@@ -84,6 +85,26 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                   </button>
                 </div>
               </nav>
+            </div>
+
+            {/* Mobile Dropdown Navigation */}
+            <div className="md:hidden bg-white rounded-xl shadow-sm border border-gray-200 relative mb-4">
+              <select 
+                className="w-full appearance-none bg-transparent py-4 pl-5 pr-10 text-sm font-extrabold text-[#0B192C] outline-none"
+                value={pathname}
+                onChange={(e) => {
+                  if (e.target.value === 'LOGOUT') handleLogout();
+                  else router.push(e.target.value);
+                }}
+              >
+                {menuItems.map(item => (
+                  <option key={item.name} value={item.href}>{item.name}</option>
+                ))}
+                <option value="LOGOUT">Logout</option>
+              </select>
+              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#0B192C]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
             </div>
           </aside>
 

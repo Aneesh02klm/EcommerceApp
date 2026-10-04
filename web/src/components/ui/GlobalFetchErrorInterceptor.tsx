@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useAuthStore } from '@/store/authStore';
 
 export function GlobalFetchErrorInterceptor() {
   const [isOffline, setIsOffline] = useState(false);
@@ -11,7 +12,25 @@ export function GlobalFetchErrorInterceptor() {
     window.fetch = async function (...args) {
       try {
         const response = await originalFetch.apply(this, args);
+        
         if (isOffline) setIsOffline(false); // recover
+
+        // Intercept 401 Unauthorized globally
+        if (response.status === 401) {
+          const url = typeof args[0] === 'string' ? args[0] : (args[0] instanceof Request ? args[0].url : '');
+          if (url.includes('/api/')) {
+            // Token is likely expired or invalid. Log the user out safely.
+            const logout = useAuthStore.getState().logout;
+            if (useAuthStore.getState().token) {
+              logout();
+              // Optional: Redirect to login if they are on a protected route, or just let the reactive authState handle it.
+              if (window.location.pathname.startsWith('/account') || window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/checkout')) {
+                  window.location.href = '/login';
+              }
+            }
+          }
+        }
+        
         return response;
       } catch (error: any) {
         // Handle Network error / Failed to fetch
@@ -28,7 +47,7 @@ export function GlobalFetchErrorInterceptor() {
             });
           }
         }
-        throw error; // Let SignalR or others throw naturally if it's not an API call
+        throw error;
       }
     };
 

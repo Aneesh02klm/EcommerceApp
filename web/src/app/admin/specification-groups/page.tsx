@@ -119,7 +119,7 @@ export default function SpecificationGroupsPage() {
         </Button>
       </header>
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
         {groups.length === 0 ? (
           <div className="p-12 text-center text-gray-400 flex flex-col items-center">
              <Settings2 size={32} className="mb-2 opacity-30" />

@@ -4,11 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { useAuthStore } from '@/store/authStore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Menu } from 'lucide-react';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuthStore();
@@ -51,10 +52,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar />
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <main className="flex-1 ml-[260px]">
-        <div className="bg-white border-b border-gray-200 h-16 px-8 flex items-center justify-end sticky top-0 z-40">
+      <main className="flex-1 w-full md:ml-[260px] flex flex-col min-h-screen overflow-x-hidden">
+        <div className="bg-white border-b border-gray-200 h-16 px-4 md:px-8 flex items-center justify-between md:justify-end sticky top-0 z-30">
+          <button className="md:hidden p-2 text-gray-500 hover:text-black" onClick={() => setSidebarOpen(true)}>
+            <Menu size={24} />
+          </button>
           <div className="flex items-center gap-4">
             <NotificationBell />
             <div className="flex items-center gap-3 border-l border-gray-100 pl-4">
@@ -66,7 +70,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
         </div>
-        <div className="p-8">
+        <div className="p-4 md:p-8 flex-1 w-full max-w-full">
           {children}
         </div>
       </main>

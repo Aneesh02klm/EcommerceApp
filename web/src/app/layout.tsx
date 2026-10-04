@@ -14,6 +14,8 @@ import { ConfirmProvider } from '@/components/ui/ConfirmProvider';
 import { CompareBar } from '@/components/ui/CompareBar';
 import { HideOnAdmin } from '@/components/ui/HideOnAdmin';
 import { WishlistNavBadge } from '@/components/ui/WishlistNavBadge';
+import { MobileBottomNav } from '@/components/ui/MobileBottomNav';
+import { MobileSidebar } from '@/components/ui/MobileSidebar';
 import { ShoppingBag, User, MapPin, Clock, Phone, Heart, ChevronDown } from 'lucide-react';
 import './globals.css';
 
@@ -57,7 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <meta charSet="utf-8" />
       </head>
-      <body className={`${inter.className} bg-gray-50 text-gray-800 flex flex-col min-h-screen`}>
+      <body className={`${inter.className} bg-gray-50 text-gray-800 flex flex-col min-h-screen pb-16 md:pb-0`}>
         <ConfirmProvider>
 
         {/* ─── TOP BAR ─────────────────────────────────────────── */}
@@ -92,7 +94,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* MAIN HEADER ──────────────────────────────────────── */}
         <HideOnAdmin>
         <header className="bg-white sticky top-0 z-50 shadow-sm">
-          <div className="container mx-auto px-6 h-[68px] flex items-center gap-8">
+          <div className="container mx-auto px-6 h-[68px] flex items-center gap-4 md:gap-8">
+            <MobileSidebar navCategories={navCategories} />
             {/* Logo */}
             <Link href="/" className="flex-shrink-0 flex flex-col leading-none select-none">
               <span className="text-[22px] font-extrabold tracking-tight text-[#0B192C]">MALIEAKAL</span>
@@ -109,7 +112,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-6 ml-auto flex-shrink-0">
+            <div className="md:hidden ml-auto flex items-center gap-4">
+              <NotificationBell />
+            </div>
+            <div className="hidden md:flex items-center gap-6 ml-auto flex-shrink-0">
               <Link href="/stores" className="flex flex-col items-center gap-0.5 text-[#0B192C] hover:text-amber-500 transition-colors group">
                 <MapPin size={21} />
                 <span className="text-[9px] font-bold uppercase tracking-wider">Stores</span>
@@ -292,6 +298,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <GlobalFetchErrorInterceptor />
         
               </ConfirmProvider>
+        <MobileBottomNav />
       </body>
     </html>
   );

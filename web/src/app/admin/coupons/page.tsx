@@ -173,7 +173,7 @@ export default function AdminCouponsPage() {
       {loading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-amber-500" size={32} /></div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
              <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
