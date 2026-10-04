@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Truck, ShieldCheck, Ticket, Phone } from 'lucide-react';
+import { Truck, ShieldCheck, Ticket, Phone, Package, Heart, Gift, Bell, Settings, MapPin, CreditCard, HelpCircle, FileText, Shield, LogOut, ChevronRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 interface DashboardData {
@@ -133,7 +133,82 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Recent Orders */}
+      
+      {/* Mobile Vertical Menu List */}
+      <div className="md:hidden space-y-4">
+        {/* Core Settings */}
+        <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100/50 overflow-hidden">
+          {[
+            { name: 'My Orders', href: '/account/orders', icon: Package, color: 'text-blue-500' },
+            { name: 'My Wishlist', href: '/wishlist', icon: Heart, color: 'text-rose-500' },
+            { name: 'My Coupons', href: '/account/coupons', icon: Ticket, color: 'text-amber-500' },
+            { name: 'My Rewards', href: '/account/rewards', icon: Gift, color: 'text-purple-500' }
+          ].map((item, i) => (
+            <Link key={i} href={item.href} className="flex items-center justify-between p-4 border-b border-gray-50 bg-white hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center ${item.color}`}>
+                  <item.icon size={20} />
+                </div>
+                <span className="text-sm font-extrabold text-[#0B192C]">{item.name}</span>
+              </div>
+              <ChevronRight size={18} className="text-gray-300" />
+            </Link>
+          ))}
+        </div>
+
+        {/* Preferences */}
+        <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100/50 overflow-hidden">
+          {[
+            { name: 'Notifications', href: '/account/notifications', icon: Bell, color: 'text-indigo-500' },
+            { name: 'Addresses', href: '/account/addresses', icon: MapPin, color: 'text-teal-500' },
+            { name: 'Payment Methods', href: '/account/payments', icon: CreditCard, color: 'text-emerald-500' },
+          ].map((item, i) => (
+            <Link key={i} href={item.href} className="flex items-center justify-between p-4 border-b border-gray-50 bg-white hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center ${item.color}`}>
+                  <item.icon size={20} />
+                </div>
+                <span className="text-sm font-extrabold text-[#0B192C]">{item.name}</span>
+              </div>
+              <ChevronRight size={18} className="text-gray-300" />
+            </Link>
+          ))}
+        </div>
+
+        {/* Support & Logout */}
+        <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100/50 overflow-hidden">
+          {[
+            { name: 'Support', href: '/account/support', icon: HelpCircle, color: 'text-gray-600' },
+            { name: 'FAQ', href: '/account/faq', icon: FileText, color: 'text-gray-600' },
+            { name: 'Privacy and Security', href: '/account/privacy', icon: Shield, color: 'text-gray-600' },
+          ].map((item, i) => (
+            <Link key={i} href={item.href} className="flex items-center justify-between p-4 border-b border-gray-50 bg-white hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center ${item.color}`}>
+                  <item.icon size={20} />
+                </div>
+                <span className="text-sm font-extrabold text-[#0B192C]">{item.name}</span>
+              </div>
+              <ChevronRight size={18} className="text-gray-300" />
+            </Link>
+          ))}
+          <button onClick={() => {
+            useAuthStore.getState().logout();
+            window.location.href = '/login';
+          }} className="w-full flex items-center justify-between p-4 bg-white hover:bg-red-50 transition-colors group">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-100 transition-colors">
+                <LogOut size={20} />
+              </div>
+              <span className="text-sm font-extrabold text-red-500">Logout</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div className="hidden md:block space-y-6">
+      {/* Recent Orders Desktop Wrapper */}
+
       <div className="bg-white rounded-md shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-4">
           <h2 className="text-base font-extrabold text-[#0B192C]">Recent Orders</h2>
@@ -191,6 +266,7 @@ export default function ProfilePage() {
             <p className="text-[10px] text-gray-400 font-semibold leading-tight">Call store support specialists</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

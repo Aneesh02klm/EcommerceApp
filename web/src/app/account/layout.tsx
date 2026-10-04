@@ -42,10 +42,29 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-6 pb-20">
-      <div className="container mx-auto px-4 max-w-7xl">
-        {/* Breadcrumb */}
-        <div className="text-xs text-gray-500 font-semibold mb-6 flex gap-2">
+    <div className="bg-gray-50 min-h-screen pt-0 md:pt-6 pb-24 md:pb-20">
+      <div className="container mx-auto px-4 max-w-7xl md:mt-0">
+        {/* Mobile Sub-page Header */}
+        {pathname !== '/account' && (
+          <div className="md:hidden bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 mb-4 sticky top-[68px] z-40 shadow-sm">
+            <Link href="/account" className="p-2 -ml-2 text-[#0B192C] hover:bg-gray-50 rounded-full transition-colors">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </Link>
+            <h1 className="text-lg font-extrabold text-[#0B192C]">
+              {menuItems.find(i => i.href === pathname)?.name || 'My Account'}
+            </h1>
+          </div>
+        )}
+
+        {/* Mobile Root Header */}
+        {pathname === '/account' && (
+          <div className="md:hidden bg-white border-b border-gray-100 px-5 py-4 flex items-center mb-4 sticky top-[68px] z-40 shadow-sm">
+            <h1 className="text-2xl font-black text-[#0B192C]">My Account</h1>
+          </div>
+        )}
+
+        
+        <div className="hidden md:flex text-xs text-gray-500 font-semibold mb-6 gap-2">
           <Link href="/">Home</Link>
           <span>/</span>
           <Link href="/account">My Account</Link>
@@ -54,10 +73,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         </div>
 
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Sidebar Navigation */}
-          <aside className="w-full md:w-64 flex-shrink-0 md:mb-0 mb-2">
-            {/* Desktop Navigation */}
-            <div className="hidden md:block bg-white rounded-md shadow-sm border border-gray-100 py-3">
+          {/* Desktop Sidebar Navigation */}
+          <aside className="hidden md:block w-64 flex-shrink-0 mb-0">
+            <div className="bg-white rounded-md shadow-sm border border-gray-100 py-3">
               <nav className="flex flex-col">
                 {menuItems.map((item) => {
                   const isActive = pathname === item.href;
@@ -85,26 +103,6 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                   </button>
                 </div>
               </nav>
-            </div>
-
-            {/* Mobile Dropdown Navigation */}
-            <div className="md:hidden bg-white rounded-xl shadow-sm border border-gray-200 relative mb-4">
-              <select 
-                className="w-full appearance-none bg-transparent py-4 pl-5 pr-10 text-sm font-extrabold text-[#0B192C] outline-none"
-                value={pathname}
-                onChange={(e) => {
-                  if (e.target.value === 'LOGOUT') handleLogout();
-                  else router.push(e.target.value);
-                }}
-              >
-                {menuItems.map(item => (
-                  <option key={item.name} value={item.href}>{item.name}</option>
-                ))}
-                <option value="LOGOUT">Logout</option>
-              </select>
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#0B192C]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-              </div>
             </div>
           </aside>
 
