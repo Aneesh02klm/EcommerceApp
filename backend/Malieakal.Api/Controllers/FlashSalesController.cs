@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dapper;
 using Malieakal.Application.Abstractions;
 using Malieakal.Domain.Entities;
@@ -67,6 +68,47 @@ namespace Malieakal.Api.Controllers
             await PopulateItems(connection, activeSales);
             return Ok(new { success = true, data = activeSales });
         }
+        [HttpGet("{id}/products")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetPreviewProducts(int id)
+        {
+            using var connection = _dbFactory.CreateConnection();
+            
+            var sqlSale = "SELECT TargetType, TargetCategoryId, TargetBrandId FROM FlashSales WHERE Id = @Id";
+            var sale = await connection.QueryFirstOrDefaultAsync<FlashSale>(sqlSale, new { Id = id });
+            
+            if (sale == null) return NotFound(new { success = false, message = "Flash sale not found" });
+
+            if (sale.TargetType == "SpecificProducts")
+            {
+                var sql = "SELECT ProductId as id, Sku as sku, Name as name, Mrp as mrp FROM FlashSaleItems WHERE FlashSaleId = @Id";
+                var items = (await connection.QueryAsync<dynamic>(sql, new { Id = id })).Select(x => new { id = x.id, sku = x.sku, name = x.name, mrp = x.mrp }).ToList();
+                return Ok(new { success = true, data = new { count = items.Count, products = items } });
+            }
+            else if (sale.TargetType == "Category")
+            {
+                var countSql = "SELECT COUNT(*) FROM Products WHERE CategoryId = @TargetCategoryId";
+                var querySql = "SELECT Id as id, Sku as sku, Name as name, Mrp as mrp FROM Products WHERE CategoryId = @TargetCategoryId";
+                
+                if (sale.TargetBrandId.HasValue && sale.TargetBrandId.Value > 0)
+                {
+                    countSql += " AND BrandId = @TargetBrandId";
+                    querySql += " AND BrandId = @TargetBrandId";
+                }
+                
+                var count = await connection.ExecuteScalarAsync<int>(countSql, new { TargetCategoryId = sale.TargetCategoryId, TargetBrandId = sale.TargetBrandId });
+                var items = (await connection.QueryAsync<dynamic>(querySql + " LIMIT 100", new { TargetCategoryId = sale.TargetCategoryId, TargetBrandId = sale.TargetBrandId })).Select(x => new { id = x.id, sku = x.sku, name = x.name, mrp = x.mrp }).ToList();
+                
+                return Ok(new { success = true, data = new { count = count, products = items } });
+            }
+            else // Store
+            {
+                var count = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Products");
+                var items = (await connection.QueryAsync<dynamic>("SELECT Id as id, Sku as sku, Name as name, Mrp as mrp FROM Products LIMIT 100")).Select(x => new { id = x.id, sku = x.sku, name = x.name, mrp = x.mrp }).ToList();
+                return Ok(new { success = true, data = new { count = count, products = items } });
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -179,6 +221,20 @@ namespace Malieakal.Api.Controllers
                 transaction.Rollback();
                 throw;
             }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleStatus(int id, [FromBody] JsonElement body)
+        {
+            var isActive = body.GetProperty("isActive").GetBoolean();
+            using var connection = _dbFactory.CreateConnection();
+            var sql = "UPDATE FlashSales SET IsActive = @IsActive WHERE Id = @Id";
+            var rows = await connection.ExecuteAsync(sql, new { IsActive = isActive, Id = id });
+            if (rows == 0) return NotFound(new { success = false, message = "Not found" });
+            return Ok(new { success = true });
         }
 
         [HttpDelete("{id}")]

@@ -1,6 +1,6 @@
  "use client";
 import React, { useState, useEffect } from 'react';
-import { Timer, ArrowLeft, Check } from 'lucide-react';
+import { Timer, ArrowLeft, Check , Eye, EyeOff} from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
@@ -18,6 +18,33 @@ export default function FlashSaleFormPage({ params }: { params?: any }) {
   const { token } = useAuthStore();
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewData, setPreviewData] = useState<any>({ count: 0, products: [] });
+
+  const loadPreview = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    try {
+      const qs = new URLSearchParams();
+      if (formData.targetType === 'Category' && formData.targetCategoryId) qs.append('categoryId', formData.targetCategoryId);
+      if (formData.targetType === 'Category' && formData.targetBrandId) qs.append('brandId', formData.targetBrandId);
+      const res = await fetch(`${API}/api/v1/products?${qs.toString()}`);
+      if (res.ok) {
+        const json = await res.json();
+        setPreviewData({
+          count: json.totalCount,
+          products: json.data || []
+        });
+      }
+    } catch (err) {
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
 
@@ -165,7 +192,16 @@ export default function FlashSaleFormPage({ params }: { params?: any }) {
 
           {/* Section 2: Target Rules */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-4">Targeting & Discount</h3>
+            
+            <div className="flex justify-between items-center border-b pb-2 mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Targeting & Discount</h3>
+              {formData.targetType !== 'SpecificProducts' && formData.targetType !== 'Store' && (
+                <button onClick={loadPreview} className="text-xs flex items-center gap-1 font-bold text-amber-600 hover:text-amber-500 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors">
+                  <Eye size={14}/> Preview Targets
+                </button>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Target Type</label>
@@ -254,7 +290,50 @@ export default function FlashSaleFormPage({ params }: { params?: any }) {
           </button>
         </div>
       </form>
-    </div>
+    
+      {previewOpen && (
+        <div className="fixed inset-0 bg-[#0B192C]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#0B192C] p-5 flex justify-between items-center text-white shrink-0 rounded-t-xl">
+              <h2 className="font-bold text-lg flex items-center gap-2"><Eye size={20}/> Preview Affected Products</h2>
+              <button type="button" onClick={() => setPreviewOpen(false)} className="text-gray-400 hover:text-white transition-colors"><EyeOff size={20}/></button>
+            </div>
+            
+            <div className="p-4 bg-amber-50 border-b border-amber-100 flex justify-between items-center shrink-0">
+              <span className="text-sm font-bold text-amber-900 uppercase tracking-widest">Total Matched Inventory:</span>
+              <span className="text-xl font-black text-amber-700">{previewLoading ? '...' : previewData?.count || 0} Items</span>
+            </div>
+            
+            <div className="p-0 overflow-y-auto flex-1 custom-scrollbar">
+              {previewLoading ? (
+                <div className="text-center py-12 text-gray-400 text-sm font-bold tracking-widest uppercase">Fetching inventory data...</div>
+              ) : !previewData?.products || previewData.products.length === 0 ? (
+                <div className="text-center py-12 text-gray-400 text-sm font-bold tracking-widest uppercase">No products match this targeting criteria.</div>
+              ) : (
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-gray-50 sticky top-0 shadow-sm">
+                    <tr>
+                      <th className="px-6 py-3 font-bold text-gray-900">Product</th>
+                      <th className="px-6 py-3 font-bold text-gray-900">SKU</th>
+                      <th className="px-6 py-3 font-bold text-gray-900 text-right">Base MRP</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {previewData.products.map((p: any) => (
+                      <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-[#0B192C] truncate max-w-[250px]" title={p.name}>{p.name}</td>
+                        <td className="px-6 py-4 text-xs text-gray-500 font-mono">{p.sku}</td>
+                        <td className="px-6 py-4 text-right font-bold text-gray-900">₹{p.mrp?.toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+</div>
   );
 }
 

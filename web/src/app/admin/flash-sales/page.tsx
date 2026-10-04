@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Timer, Plus, Edit2, Trash2, Search, ExternalLink } from 'lucide-react';
+import { Timer, Plus, Edit2, Trash2, Search, ExternalLink, Eye , EyeOff} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
@@ -14,8 +14,28 @@ export default function FlashSalesPage() {
   const [sales, setSales] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { token } = useAuthStore();
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewData, setPreviewData] = useState<any>({ count: 0, products: [] });
+
+  const openPreview = async (id: number) => {
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    setPreviewData({ count: 0, products: [] });
+    
+    try {
+      const res = await fetch(`${API}/api/v1/flash-sales/${id}/products`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const json = await res.json();
+      if (json.success) setPreviewData(json.data);
+    } catch(e) {}
+    
+    setPreviewLoading(false);
+  };
+
   
   const [formData, setFormData] = useState({
     id: 0,
@@ -51,6 +71,25 @@ export default function FlashSalesPage() {
       const json = await res.json();
       if (json.success) setCategories(json.data);
     } catch (err) { }
+  };
+
+  
+  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`${API}/api/v1/flash-sales/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ isActive: !currentStatus })
+      });
+      if (res.ok) {
+        toast.success('Status updated');
+        fetchSales();
+      } else {
+        toast.error('Failed to update status');
+      }
+    } catch(err) {
+      toast.error('Error updating status');
+    }
   };
 
   const handleOpenModal = (sale: any = null) => {
@@ -141,42 +180,95 @@ export default function FlashSalesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {sales.map((sale) => {
-                const now = new Date();
-                const start = new Date(sale.startTime);
-                const end = new Date(sale.endTime);
-                
-                let statusObj = { label: 'Inactive', color: 'bg-gray-100 text-gray-600' };
-                if (sale.isActive) {
-                    if (now < start) statusObj = { label: 'Scheduled', color: 'bg-blue-100 text-blue-700' };
-                    else if (now > end) statusObj = { label: 'Expired', color: 'bg-red-100 text-red-700' };
-                    else statusObj = { label: 'Active', color: 'bg-green-100 text-green-700' };
-                }
+              {(() => {
+                const filteredSales = sales.filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()));
+                if(filteredSales.length === 0) return <tr><td colSpan={6} className="text-center py-8 text-gray-500">No flash sales found.</td></tr>;
+                return filteredSales.map((sale) => {
+                  const now = new Date();
+                  const start = new Date(sale.startTime);
+                  const end = new Date(sale.endTime);
+                  
+                  let statusObj = { text: 'Scheduled', color: 'bg-blue-100 text-blue-700' };
+                  if (!sale.isActive) statusObj = { text: 'Disabled', color: 'bg-gray-100 text-gray-500' };
+                  else if (now >= start && now <= end) statusObj = { text: 'Active Now', color: 'bg-green-100 text-green-700 animate-pulse' };
+                  else if (now > end) statusObj = { text: 'Ended', color: 'bg-red-100 text-red-700' };
 
-                return (
-                  <tr key={sale.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="px-6 py-4 font-bold text-gray-900">{sale.title}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md ${statusObj.color}`}>
-                        {statusObj.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-bold text-amber-500">{sale.discountValue}% OFF</td>
-                    <td className="px-6 py-4 text-xs text-gray-500 font-medium">
-                      {start.toLocaleDateString()} to {end.toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-right flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleOpenModal(sale)} className="p-2 text-gray-400 hover:text-[#0B192C] bg-white border border-gray-200 rounded shadow-sm"><Edit2 size={14}/></button>
-                      <button onClick={() => handleDelete(sale.id)} className="p-2 text-gray-400 hover:text-red-500 bg-white border border-gray-200 rounded shadow-sm"><Trash2 size={14}/></button>
-                    </td>
-                  </tr>
-                );
-              })}
+                  return (
+                    <tr key={sale.id} className="hover:bg-gray-50 transition-colors group">
+                      <td className="px-6 py-4 font-bold text-gray-900">{sale.title}</td>
+                      <td className="px-6 py-4">
+                        <button 
+                            onClick={() => handleToggleStatus(sale.id, sale.isActive)}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${sale.isActive ? 'bg-amber-500' : 'bg-gray-200'}`}
+                        >
+                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${sale.isActive ? 'translate-x-4' : 'translate-x-1'}`} />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md ${statusObj.color}`}>
+                          {statusObj.text}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-500 font-medium">
+                        {start.toLocaleDateString()} to {end.toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-right flex items-center justify-end gap-2 transition-opacity">
+                        <button onClick={() => openPreview(sale.id)} title="Preview Affected Products" className="p-2 text-gray-400 hover:text-blue-500 bg-white border border-gray-200 rounded shadow-sm"><Eye size={14}/></button>
+                        <button onClick={() => handleOpenModal(sale)} className="p-2 text-gray-400 hover:text-[#0B192C] bg-white border border-gray-200 rounded shadow-sm"><Edit2 size={14}/></button>
+                        <button onClick={() => handleDelete(sale.id)} className="p-2 text-gray-400 hover:text-red-500 bg-white border border-gray-200 rounded shadow-sm"><Trash2 size={14}/></button>
+                      </td>
+                    </tr>
+                  );
+                });
+              })()}
             </tbody>
           </table>
         </div>
       )}
 
+          
+      {previewOpen && (
+        <div className="fixed inset-0 bg-[#0B192C]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#0B192C] p-5 flex justify-between items-center text-white shrink-0 rounded-t-xl">
+              <h2 className="font-bold text-lg flex items-center gap-2"><Eye size={20}/> Preview Affected Products</h2>
+              <button type="button" onClick={() => setPreviewOpen(false)} className="text-gray-400 hover:text-white transition-colors"><EyeOff size={20}/></button>
+            </div>
+            
+            <div className="p-4 bg-amber-50 border-b border-amber-100 flex justify-between items-center shrink-0">
+              <span className="text-sm font-bold text-amber-900 uppercase tracking-widest">Total Matched Inventory:</span>
+              <span className="text-xl font-black text-amber-700">{previewLoading ? '...' : previewData?.count || 0} Items</span>
+            </div>
+            
+            <div className="p-0 overflow-y-auto flex-1 custom-scrollbar">
+              {previewLoading ? (
+                <div className="text-center py-12 text-gray-400 text-sm font-bold tracking-widest uppercase">Fetching inventory data...</div>
+              ) : !previewData?.products || previewData.products.length === 0 ? (
+                <div className="text-center py-12 text-gray-400 text-sm font-bold tracking-widest uppercase">No products match this targeting criteria.</div>
+              ) : (
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-gray-50 sticky top-0 shadow-sm">
+                    <tr>
+                      <th className="px-6 py-3 font-bold text-gray-900">Product</th>
+                      <th className="px-6 py-3 font-bold text-gray-900">SKU</th>
+                      <th className="px-6 py-3 font-bold text-gray-900 text-right">Base MRP</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {previewData.products.map((p: any) => (
+                      <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-[#0B192C] truncate max-w-[250px]" title={p.name}>{p.name}</td>
+                        <td className="px-6 py-4 text-xs text-gray-500 font-mono">{p.sku}</td>
+                        <td className="px-6 py-4 text-right font-bold text-gray-900">₹{p.mrp?.toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
+        </div>
+      )}
+</div>
   );
 }

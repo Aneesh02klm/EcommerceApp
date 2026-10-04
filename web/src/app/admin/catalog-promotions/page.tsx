@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/Toast';
-import { Plus, Edit2, Trash2, Eye, Tag } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Tag, Search } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { useConfirm } from '@/components/ui/ConfirmProvider';
 
@@ -17,6 +17,7 @@ export default function CatalogPromotions() {
   const [promotions, setPromotions] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<{count: number, products: any[]}>({ count: 0, products: [] });
@@ -55,6 +56,25 @@ export default function CatalogPromotions() {
         fetchPromotions();
       }
     });
+  };
+
+  
+  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`${API}/api/v1/catalog-promotions/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ isActive: !currentStatus })
+      });
+      if (res.ok) {
+        toast.success('Status updated');
+        fetchPromotions();
+      } else {
+        toast.error('Failed to update status');
+      }
+    } catch(err) {
+      toast.error('Error updating status');
+    }
   };
 
   const openPreview = async (id: number) => {
@@ -103,33 +123,42 @@ export default function CatalogPromotions() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {promotions.map(p => (
-              <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 font-bold text-[#0B192C] flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-400"><Tag size={16}/></div>
-                  {p.name}
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-full ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {p.isActive ? 'Active' : 'Disabled'}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[11px] font-bold uppercase">{getTargetLabel(p)}</span>
-                </td>
-                <td className="px-6 py-4 font-bold text-amber-600">
-                  {p.discountType === 'Percentage' ? `${p.discountValue}% OFF` : `₹${p.discountValue} OFF`}
-                </td>
-                <td className="px-6 py-4 text-xs text-gray-500">
-                  {new Date(p.startDate).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'})} - {new Date(p.endDate).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'})}
-                </td>
-                <td className="px-6 py-4 flex gap-3 justify-end items-center">
-                  <button onClick={() => openPreview(p.id)} title="Preview Affected Products" className="text-gray-400 hover:text-blue-500"><Eye size={16} /></button>
-                  <button onClick={() => router.push(`/admin/catalog-promotions/${p.id}`)} className="text-gray-400 hover:text-amber-500"><Edit2 size={16} /></button>
-                  <button onClick={() => deletePromo(p.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
-                </td>
-              </tr>
-            ))}
+            {(() => {
+              const filteredPromos = promotions.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+              if(filteredPromos.length === 0) return <tr><td colSpan={6} className="text-center py-8 text-gray-500">No promotions found.</td></tr>;
+              return filteredPromos.map(p => (
+                <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 font-bold text-[#0B192C] flex items-center gap-3">
+                    <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-400"><Tag size={16}/></div>
+                    {p.name}
+                  </td>
+                  <td className="px-6 py-4">
+                    <button 
+                        onClick={() => handleToggleStatus(p.id, p.isActive)}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${p.isActive ? 'bg-amber-500' : 'bg-gray-200'}`}
+                    >
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${p.isActive ? 'translate-x-4' : 'translate-x-1'}`} />
+                    </button>
+                  </td>
+                  <td className="px-6 py-4">
+                    {p.targetType === 'Store' && <span className="px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-md">Entire Store</span>}
+                    {p.targetType === 'Category' && <span className="px-2 py-1 text-xs font-medium bg-purple-50 text-purple-700 rounded-md">Category / Brand</span>}
+                    {p.targetType === 'SpecificProducts' && <span className="px-2 py-1 text-xs font-medium bg-orange-50 text-orange-700 rounded-md">Specific Items</span>}
+                  </td>
+                  <td className="px-6 py-4 font-bold text-amber-600">
+                    {p.discountType === 'Percentage' ? `${p.discountValue}%` : `₹${p.discountValue}`} OFF
+                  </td>
+                  <td className="px-6 py-4 text-xs text-gray-500 font-medium">
+                    {new Date(p.startDate).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'})} - {new Date(p.endDate).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'})}
+                  </td>
+                  <td className="px-6 py-4 flex gap-3 justify-end items-center">
+                    <button onClick={() => openPreview(p.id)} title="Preview Affected Products" className="text-gray-400 hover:text-blue-500"><Eye size={16} /></button>
+                    <button onClick={() => router.push(`/admin/catalog-promotions/${p.id}`)} className="text-gray-400 hover:text-amber-500"><Edit2 size={16} /></button>
+                    <button onClick={() => deletePromo(p.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                  </td>
+                </tr>
+              ));
+            })()}
           </tbody>
         </table>
       </div>

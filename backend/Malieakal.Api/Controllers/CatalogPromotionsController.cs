@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dapper;
 using Malieakal.Application.Abstractions;
 using Malieakal.Domain.Entities;
@@ -80,7 +81,7 @@ namespace Malieakal.Api.Controllers
             if (promo.TargetType == "SpecificProducts")
             {
                 var sql = "SELECT ProductId as id, Sku as sku, Name as name, Mrp as mrp FROM CatalogPromotionItems WHERE CatalogPromotionId = @Id";
-                var items = (await connection.QueryAsync(sql, new { Id = id })).ToList();
+                var items = (await connection.QueryAsync<dynamic>(sql, new { Id = id })).Select(x => new { id = x.id, sku = x.sku, name = x.name, mrp = x.mrp }).ToList();
                 return Ok(new { success = true, data = new { count = items.Count, products = items } });
             }
             else if (promo.TargetType == "Category")
@@ -95,14 +96,14 @@ namespace Malieakal.Api.Controllers
                 }
                 
                 var count = await connection.ExecuteScalarAsync<int>(countSql, new { TargetCategoryId = promo.TargetCategoryId, TargetBrandId = promo.TargetBrandId });
-                var items = (await connection.QueryAsync(querySql + " LIMIT 100", new { TargetCategoryId = promo.TargetCategoryId, TargetBrandId = promo.TargetBrandId })).ToList();
+                var items = (await connection.QueryAsync<dynamic>(querySql + " LIMIT 100", new { TargetCategoryId = promo.TargetCategoryId, TargetBrandId = promo.TargetBrandId })).Select(x => new { id = x.id, sku = x.sku, name = x.name, mrp = x.mrp }).ToList();
                 
                 return Ok(new { success = true, data = new { count = count, products = items } });
             }
             else // Store
             {
                 var count = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Products");
-                var items = (await connection.QueryAsync("SELECT Id as id, Sku as sku, Name as name, Mrp as mrp FROM Products LIMIT 100")).ToList();
+                var items = (await connection.QueryAsync<dynamic>("SELECT Id as id, Sku as sku, Name as name, Mrp as mrp FROM Products LIMIT 100")).Select(x => new { id = x.id, sku = x.sku, name = x.name, mrp = x.mrp }).ToList();
                 return Ok(new { success = true, data = new { count = count, products = items } });
             }
         }
@@ -221,6 +222,20 @@ namespace Malieakal.Api.Controllers
                 transaction.Rollback();
                 throw;
             }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleStatus(int id, [FromBody] JsonElement body)
+        {
+            var isActive = body.GetProperty("isActive").GetBoolean();
+            using var connection = _dbFactory.CreateConnection();
+            var sql = "UPDATE CatalogPromotions SET IsActive = @IsActive WHERE Id = @Id";
+            var rows = await connection.ExecuteAsync(sql, new { IsActive = isActive, Id = id });
+            if (rows == 0) return NotFound(new { success = false, message = "Not found" });
+            return Ok(new { success = true });
         }
 
         [HttpDelete("{id}")]
