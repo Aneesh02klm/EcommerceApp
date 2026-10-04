@@ -15,8 +15,13 @@ export function SignalRListener() {
       .build();
 
     connection.start().catch((err: any) => {
-      if (err.message && err.message.includes('stopped during negotiation')) return; // Ignore React 18 StrictMode unmounts
-      console.error('SignalR Connection Error: ', err);
+      // Graceful degradation: Ignore fetch/negotiation errors if backend is completely offline
+      if (err.message && err.message.includes('stopped during negotiation')) return;
+      if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('negotiation'))) {
+          console.warn('Real-time sync unavailable. Backend may be offline.');
+          return;
+      }
+      console.warn('SignalR Connection Error: ', err.message);
     });
 
     

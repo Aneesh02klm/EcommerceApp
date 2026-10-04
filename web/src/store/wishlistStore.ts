@@ -23,7 +23,16 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
       const res = await fetch(`${API}/api/v1/wishlist`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const json = await res.json();
+      
+        if (!res.ok) {
+            if (res.status === 401) {
+                console.warn('Unauthorized fetch to ' + res.url);
+                return;
+            }
+        }
+        let json: any = { success: false, data: {} };
+        try { json = await res.json(); } catch(e) {}
+    
       if (json.success) {
         set({ items: json.data || [] });
       }

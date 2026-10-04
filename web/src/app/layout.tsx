@@ -8,6 +8,7 @@ import { UserNavClient } from '@/components/ui/UserNavClient';
 import { CartNavBadge } from '@/components/ui/CartNavBadge';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { AppInitializer } from '@/components/ui/AppInitializer';
+import { GlobalFetchErrorInterceptor } from '@/components/ui/GlobalFetchErrorInterceptor';
 import { ToastContainer } from '@/components/ui/Toast';
 import { CompareBar } from '@/components/ui/CompareBar';
 import { HideOnAdmin } from '@/components/ui/HideOnAdmin';
@@ -285,6 +286,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </HideOnAdmin>
         <ToastContainer />
         <AppInitializer />
+        <GlobalFetchErrorInterceptor />
       </body>
     </html>
   );

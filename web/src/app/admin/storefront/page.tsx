@@ -55,7 +55,7 @@ function SortableSection({ section, updateSection, categories, brands, products 
         </div>
         <div className="flex-1 space-y-6">
           <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-            <h3 className="font-black text-lg text-[#0B192C] capitalize">{section.id.replace('_', ' ')} <span className="text-xs text-gray-400 font-bold ml-2 tracking-widest uppercase bg-gray-100 px-2 py-1 rounded">({section.type})</span></h3>
+            <h3 className="font-black text-lg text-[#0B192C] capitalize">{section.id.replace(/_\d+$/, '').replace(/_/g, ' ')} <span className="text-xs text-gray-400 font-bold ml-2 tracking-widest uppercase bg-gray-100 px-2 py-1 rounded">({section.type})</span></h3>
             <label className="flex items-center cursor-pointer">
               <div className="relative">
                 <input type="checkbox" className="sr-only" checked={section.isActive} onChange={e => updateSection(section.id, { isActive: e.target.checked })} />
@@ -195,6 +195,12 @@ function SortableSection({ section, updateSection, categories, brands, products 
             </div>
           )}
   
+          {section.type === 'FlashSalesGrid' && (
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg flex items-center justify-center text-blue-500 font-bold">
+                This block will automatically display the master Countdown Timer and products targeted by the Active Flash Sale.
+              </div>
+            )}
+
           {section.type === 'ProductGrid' && (() => {
               const t = (section.title || '').toLowerCase();
               const isLightning = t.includes('lightning') || t.includes('deal') || t.includes('offer');
@@ -319,9 +325,25 @@ export default function AdminStorefrontPage() {
       const brandJson = await brandRes.json();
       const prodJson = await prodRes.json();
       
-      if (confJson.success && confJson.data?.sections) {
-        setSections(confJson.data.sections.sort((a: any, b: any) => a.order - b.order));
-      }
+      let fetchedSections = (confJson.success && confJson.data?.sections) ? confJson.data.sections : [];
+        const defaultBlocks = [
+          { id: 'hero_1', type: 'HeroSlider', isActive: true, order: 1, title: 'Welcome to Malieakal', subtitle: 'Premium Collection' },
+          { id: 'flash_sales_1', type: 'FlashSalesGrid', isActive: true, order: 2, title: '⚡ WEEKEND MEGA SALE', subtitle: 'Hurry up! Offers end soon.' },
+          { id: 'grid_lightning', type: 'ProductGrid', queryType: 'LightningDeals', isActive: true, order: 3, title: 'Lightning Deals', subtitle: 'Limited Time Offers' },
+          { id: 'grid_bestsellers', type: 'ProductGrid', queryType: 'BestSellers', isActive: true, order: 4, title: 'Best Sellers', subtitle: 'Most Popular' },
+          { id: 'grid_new', type: 'ProductGrid', queryType: 'NewArrivals', isActive: true, order: 5, title: 'New Arrivals', subtitle: 'Latest Additions' },
+          { id: 'cats_1', type: 'FeaturedCategories', isActive: true, order: 6, title: 'Shop by Category', subtitle: 'Our Collections' },
+          { id: 'brands_1', type: 'BrandPartners', isActive: true, order: 7, title: 'Top Brands', subtitle: 'Our Partners' },
+          { id: 'discover_1', type: 'DiscoverMore', isActive: true, order: 8, title: 'Discover More', subtitle: 'General Catalog' }
+        ];
+
+        defaultBlocks.forEach(db => {
+          if (!fetchedSections.find((fs: any) => fs.id === db.id || (fs.type === db.type && (fs.type !== 'ProductGrid' || fs.queryType === db.queryType)))) {
+            fetchedSections.push({ ...db, isActive: false, order: fetchedSections.length + 1 });
+          }
+        });
+        
+        setSections(fetchedSections.sort((a: any, b: any) => a.order - b.order));
       if (catJson.success) setCategories(catJson.data);
       if (brandJson.success) setBrands(brandJson.data);
       if (prodJson.success) setProducts(prodJson.data);
@@ -343,6 +365,19 @@ export default function AdminStorefrontPage() {
       });
     }
   };
+
+  
+const addFlashSaleBlock = () => {
+    const newBlock = {
+        id: 'flash_sales_' + Date.now(),
+        type: 'FlashSalesGrid',
+        isActive: true,
+        order: sections.length + 1,
+        title: '⚡ WEEKEND MEGA SALE',
+        subtitle: 'Hurry up! Offers end soon.'
+    };
+    setSections([...sections, newBlock]);
+};
 
   const updateSection = (id: string, updates: Partial<SectionConfig>) => {
     setSections(items => items.map(i => i.id === id ? { ...i, ...updates } : i));

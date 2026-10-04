@@ -4,19 +4,27 @@ import React, { useEffect, useState } from 'react';
 import { 
   Search, Bell, Calendar, Plus, Percent, Tag, Megaphone, Image as ImageIcon, 
   ShoppingCart, TrendingUp, TrendingDown, Loader2
-} from 'lucide-react';
+, Package, CheckCircle, Truck, Clock, Home, XCircle, RotateCcw, Info, ChevronRight} from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
+const STATUS_ICONS: Record<string, React.ElementType> = {
+  Processing: Package,
+  Confirmed: CheckCircle,
+  Shipped: Truck,
+  Pending: Clock,
+  Delivered: Home,
+  Cancelled: XCircle,
+  Failed: XCircle,
+  Returned: RotateCcw,
+};
 
-  const getPendingOrdersString = (breakdown: any) => {
-    if (!breakdown || !Array.isArray(breakdown)) return '0';
-    if (breakdown.length === 0) return '0';
-    return breakdown.map((b: any) => `${b.status}: ${b.count}`).join(' | ');
-  };
+
+
+  
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -157,7 +165,72 @@ export default function AdminDashboard() {
         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm flex flex-col justify-between col-span-1 md:col-span-2 lg:col-span-1">
   <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">PENDING ORDERS</h3>
   <div className="flex items-end justify-between">
-    {isRefreshing ? <Loader2 className="animate-spin text-amber-500" size={24} /> : <span className="text-sm font-black text-[#0B192C]">{getPendingOrdersString(data?.pendingOrdersBreakdown)}</span>}
+    {isRefreshing ? <Loader2 className="animate-spin text-amber-500" size={24} /> : (() => {
+        const STANDARD_FLOW = ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered'];
+        const breakdown = data?.pendingOrdersBreakdown || [];
+        
+        const breakdownMap = breakdown.reduce((acc: any, curr: any) => {
+          acc[curr.status] = curr.count;
+          return acc;
+        }, {});
+        
+        const otherStatuses = breakdown.filter((b: any) => !STANDARD_FLOW.includes(b.status) && b.count > 0);
+        
+        return (
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {STANDARD_FLOW.map((status, index) => {
+              const count = breakdownMap[status] || 0;
+              const isActive = count > 0;
+              const IconComp = STATUS_ICONS[status] || Info;
+              
+              return (
+                <React.Fragment key={status}>
+                  <div 
+                    title={`${count} ${status}`} 
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-md border cursor-help transition-all group ${
+                      isActive 
+                        ? 'bg-amber-50 border-amber-200 shadow-sm' 
+                        : 'bg-gray-50 border-gray-100 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <IconComp 
+                      size={14} 
+                      strokeWidth={isActive ? 2.5 : 2} 
+                      className={`transition-colors ${isActive ? 'text-amber-500' : 'text-gray-400 group-hover:text-amber-500'}`} 
+                    />
+                    <span className={`text-xs font-black ${isActive ? 'text-[#0B192C]' : 'text-gray-400'}`}>
+                      {count}
+                    </span>
+                  </div>
+                  
+                  {index < STANDARD_FLOW.length - 1 && (
+                    <ChevronRight size={14} strokeWidth={3} className="text-gray-200 flex-shrink-0" />
+                  )}
+                </React.Fragment>
+              );
+            })}
+            
+            {otherStatuses.length > 0 && (
+              <>
+                <div className="w-px h-6 bg-gray-200 mx-1 flex-shrink-0" />
+                {otherStatuses.map((b: any) => {
+                  const IconComp = STATUS_ICONS[b.status] || Info;
+                  return (
+                    <div 
+                      key={b.status} 
+                      title={`${b.count} ${b.status}`} 
+                      className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md border border-gray-100 cursor-help group ml-1"
+                    >
+                      <IconComp size={14} strokeWidth={2.5} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                      <span className="text-xs font-black text-[#0B192C]">{b.count}</span>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        );
+      })()}
   </div>
 </div>
         

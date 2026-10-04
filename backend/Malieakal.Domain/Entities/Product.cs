@@ -29,7 +29,10 @@ namespace Malieakal.Domain.Entities
         public bool IsActive { get; set; } = true;
         public bool IsBestSeller { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; }
+        public string? AppliedPromotionType { get; set; }
+        public string? FlashSaleName { get; set; }
+        public DateTime? FlashSaleEndTime { get; set; }
 
         public string SpecificationJson { get; set; } = "{}";
         public string VariantKeys { get; set; } = "[]";

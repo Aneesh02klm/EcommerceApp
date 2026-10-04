@@ -101,6 +101,7 @@ using (var scope = app.Services.CreateScope())
               "Database/126_CatalogPromotions.sql",
               "Database/127_StorefrontIndexes.sql",
               "Database/128_CatalogPromotionsAdvanced.sql",
+            "Database/129_FlashSales.sql",
               "Database/122_DraftPublish.sql",
             "Database/116_CouponUsageLimit.sql",
             "Database/108_AddVariantIdToCartItems.sql",

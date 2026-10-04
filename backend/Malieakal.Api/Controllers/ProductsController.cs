@@ -28,7 +28,7 @@ namespace Malieakal.Api.Controllers
                 var promo = activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetCategoryId == p.CategoryId && pr.TargetBrandId == p.BrandId)
                          ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Brand" && pr.TargetBrandId == p.BrandId)
                          ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetCategoryId == p.CategoryId && pr.TargetBrandId == null)
-                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Store");
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Store" || (pr.TargetType == "Category" && pr.TargetCategoryId == null && pr.TargetBrandId == p.BrandId));
 
                 if (promo != null)
                 {
@@ -38,6 +38,7 @@ namespace Malieakal.Api.Controllers
 
                     p.FinalPrice = p.MRP - promoDiscount;
                     p.Discount = promo.DiscountValue;
+                    p.AppliedPromotionType = "CATALOG_PROMOTION";
                 }
             }
         }
@@ -45,6 +46,43 @@ namespace Malieakal.Api.Controllers
         private async Task ApplyCatalogPromotions(Malieakal.Domain.Entities.Product product)
         {
             if (product != null) await ApplyCatalogPromotions(new[] { product });
+        }
+
+        private async Task ApplyFlashSales(IEnumerable<Malieakal.Domain.Entities.Product> products)
+        {
+            if (products == null || !products.Any()) return;
+            try {
+                using var connection = _db.CreateConnection();
+                var activeFlashSales = (await connection.QueryAsync<Malieakal.Domain.Entities.FlashSale>(
+                    @"SELECT * FROM FlashSales 
+                      WHERE IsActive = true 
+                        AND (NOW() AT TIME ZONE 'UTC') BETWEEN StartTime AND EndTime")).ToList();
+
+                if (!activeFlashSales.Any()) return;
+
+                foreach (var p in products)
+                {
+                    var sale = activeFlashSales.FirstOrDefault(fs => 
+                        fs.TargetType == "Store" || 
+                        (fs.TargetType == "Category" && fs.TargetCategoryId == p.CategoryId) || (fs.TargetCategoryId == 0) ||
+                        (fs.TargetCategoryId == p.CategoryId && p.CategoryId != null));
+
+                    if (sale != null)
+                    {
+                        p.FinalPrice = p.MRP - (p.MRP * (sale.DiscountValue / 100m));
+                        p.FlashSaleName = sale.Title;
+                        p.FlashSaleEndTime = sale.EndTime;
+                        p.AppliedPromotionType = "FLASH_SALE";
+                    }
+                }
+            } catch {
+                // Ignore if table does not exist yet
+            }
+        }
+
+        private async Task ApplyFlashSales(Malieakal.Domain.Entities.Product product)
+        {
+            if (product != null) await ApplyFlashSales(new[] { product });
         }
 
         private readonly IProductRepository _productRepository;
@@ -60,11 +98,24 @@ namespace Malieakal.Api.Controllers
             _hubContext = hubContext;
         }
 
+        [HttpGet("test-promos")]
+        public async Task<IActionResult> TestPromos() {
+            using var connection = _db.CreateConnection();
+            var promos = await connection.QueryAsync<dynamic>("SELECT * FROM CatalogPromotions");
+            return Ok(promos);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] Malieakal.Application.Models.ProductSearchQuery query)
         {
             var products = (await _productRepository.SearchAsync(query)).ToList();
             await ApplyCatalogPromotions(products);
+            await ApplyFlashSales(products);
+            
+            if (query.IsDeal == true) {
+                products = products.Where(p => p.AppliedPromotionType == "CATALOG_PROMOTION" || p.AppliedPromotionType == "FLASH_SALE").ToList();
+            }
+            
             return Ok(new { success = true, data = products });
         }
 
@@ -81,6 +132,7 @@ namespace Malieakal.Api.Controllers
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound(new { success = false, message = "Product not found." });
             await ApplyCatalogPromotions(new[] { product });
+            await ApplyFlashSales(new[] { product });
             return Ok(new { success = true, data = product });
         }
 
@@ -90,6 +142,7 @@ namespace Malieakal.Api.Controllers
             var product = await _productRepository.GetBySlugAsync(slug);
             if (product == null) return NotFound(new { success = false, message = "Product not found." });
             await ApplyCatalogPromotions(new[] { product });
+            await ApplyFlashSales(new[] { product });
             return Ok(new { success = true, data = product });
         }
 

@@ -8,6 +8,7 @@ import { ProductGallery } from '@/components/ui/ProductGallery';
 import { AddToCartWidget } from '@/components/ui/AddToCartWidget';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { FlashSaleCountdown } from '@/components/ui/FlashSaleCountdown';
 
 export function ProductDetailClient({ product, category, brand, specifications, relatedProducts, API }: any) {
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
@@ -178,6 +179,23 @@ export function ProductDetailClient({ product, category, brand, specifications, 
               <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-widest mb-2 block">
                 {brand ? `${brand.name} DIRECT AUTHORIZED` : 'DIRECT AUTHORIZED'}
               </span>
+              {product.appliedPromotionType === 'FLASH_SALE' && (
+                  <div className="mb-4">
+                    <div className="flex flex-col gap-2">
+                      <span className="bg-red-600 text-white text-[11px] font-black px-2.5 py-1 rounded shadow-sm uppercase tracking-wider w-fit flex items-center gap-1">
+                        ⚡ FLASH SALE
+                      </span>
+                      {product.flashSaleEndTime && <FlashSaleCountdown endTime={product.flashSaleEndTime} saleName={product.flashSaleName} />}
+                    </div>
+                  </div>
+                )}
+                {product.appliedPromotionType === 'CATALOG_PROMOTION' && (
+                  <div className="mb-4">
+                    <span className="bg-amber-500 text-white text-[11px] font-black px-2.5 py-1 rounded shadow-sm uppercase tracking-wider w-fit flex items-center gap-1">
+                      🔥 LIMITED DEAL
+                    </span>
+                  </div>
+                )}
               <h1 className="text-3xl lg:text-[40px] font-serif font-black text-[#0B192C] leading-[1.15] mb-4">
                 {product.name}
               </h1>

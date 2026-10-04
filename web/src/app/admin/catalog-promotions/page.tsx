@@ -189,16 +189,16 @@ export default function CatalogPromotions() {
                   <>
                     <div className="flex-1">
                       <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Category</label>
-                      <select required value={formData.targetCategoryId} onChange={e => setFormData({...formData, targetCategoryId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
+                      <select required value={String(formData.targetCategoryId || '')} onChange={e => setFormData({...formData, targetCategoryId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
                         <option value="">-- Select --</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        {categories.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
                       </select>
                     </div>
                     <div className="flex-1">
                       <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Brand (Optional)</label>
-                      <select value={formData.targetBrandId} onChange={e => setFormData({...formData, targetBrandId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
+                      <select value={String(formData.targetBrandId || '')} onChange={e => setFormData({...formData, targetBrandId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
                         <option value="">-- Any Brand --</option>
-                        {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        {brands.map(b => <option key={b.id} value={String(b.id)}>{b.name}</option>)}
                       </select>
                     </div>
                   </>
@@ -207,9 +207,9 @@ export default function CatalogPromotions() {
                 {formData.targetType === 'Brand' && (
                   <div className="flex-1">
                     <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Brand</label>
-                    <select required value={formData.targetBrandId} onChange={e => setFormData({...formData, targetBrandId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
+                    <select required value={String(formData.targetBrandId || '')} onChange={e => setFormData({...formData, targetBrandId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
                       <option value="">-- Select --</option>
-                      {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                      {brands.map(b => <option key={b.id} value={String(b.id)}>{b.name}</option>)}
                     </select>
                   </div>
                 )}

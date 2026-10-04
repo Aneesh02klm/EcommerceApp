@@ -80,7 +80,16 @@ export const useCartStore = create<CartState>()(
             const res = await fetch(`${API}/api/v1/cart`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            const json = await res.json();
+            
+        if (!res.ok) {
+            if (res.status === 401) {
+                console.warn('Unauthorized fetch to ' + res.url);
+                return;
+            }
+        }
+        let json: any = { success: false, data: {} };
+        try { json = await res.json(); } catch(e) {}
+    
             if (json.success && json.data && json.data.items) {
               const backendItems = json.data.items.map((i: any) => ({
                 productId: i.productId,
@@ -112,7 +121,16 @@ export const useCartStore = create<CartState>()(
           try {
             const res = await fetch(`${API}/api/v1/products/${productId}`);
             if (!res.ok) throw new Error('Product not found');
-            const json = await res.json();
+            
+        if (!res.ok) {
+            if (res.status === 401) {
+                console.warn('Unauthorized fetch to ' + res.url);
+                return;
+            }
+        }
+        let json: any = { success: false, data: {} };
+        try { json = await res.json(); } catch(e) {}
+    
             const product = json.data;
 
             const newItem: CartItem = {
@@ -164,7 +182,16 @@ export const useCartStore = create<CartState>()(
             try {
               const res = await fetch(`${API}/api/v1/products/${item.productId}`);
               if (!res.ok) return item;
-              const json = await res.json();
+              
+        if (!res.ok) {
+            if (res.status === 401) {
+                console.warn('Unauthorized fetch to ' + res.url);
+                return item;
+            }
+        }
+        let json: any = { success: false, data: {} };
+        try { json = await res.json(); } catch(e) {}
+    
               const product = json.data;
               return {
                 ...item,

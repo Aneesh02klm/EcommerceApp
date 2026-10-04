@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useState } from 'react';
 import { toast } from './Toast';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { FlashSaleCountdown } from '@/components/ui/FlashSaleCountdown';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 const MAX_COMPARE = 4;
@@ -32,14 +33,23 @@ interface ProductCardProps {
   isBestSeller?: boolean;
   isbestseller?: boolean;
   layout?: 'grid' | 'list';
+  flashSaleEndTime?: string;
+  flashSaleName?: string;
+  flashsaleendtime?: string;
+  flashsalename?: string;
+  appliedPromotionType?: string;
+  appliedpromotiontype?: string;
 }
 
-export function ProductCard({ id, name, slug, mrp, finalPrice, finalprice, discount, imageUrl, imageurl, rating = 4.5, brand, stock = 1, categorySlug, brandSlug, layout = 'grid', isBestSeller, isbestseller }: ProductCardProps) {
+export function ProductCard({ id, name, slug, mrp, finalPrice, finalprice, discount, imageUrl, imageurl, rating = 4.5, brand, stock = 1, categorySlug, brandSlug, layout = 'grid', isBestSeller, isbestseller, flashSaleEndTime, flashsaleendtime, flashSaleName, flashsalename, appliedPromotionType, appliedpromotiontype }: ProductCardProps) {
   const addItem = useCartStore(s => s.addItem);
   const { addItem: addToCompare, removeItem: removeFromCompare, isComparing, items: compareItems } = useCompareStore();
   const token = useAuthStore(s => s.token);
   const { toggleWishlist, isInWishlist } = useWishlistStore();
   const wishlisted = isInWishlist(id);
+  const actualFsEnd = flashSaleEndTime || flashsaleendtime;
+  const actualFsName = flashSaleName || flashsalename;
+  const promoType = appliedPromotionType || appliedpromotiontype;
   const [adding, setAdding] = useState(false);
 
   const price = finalPrice ?? finalprice ?? 0;
@@ -84,13 +94,23 @@ export function ProductCard({ id, name, slug, mrp, finalPrice, finalprice, disco
     <div className={`group relative flex bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 h-full ${layout === 'list' ? 'flex-col sm:flex-row' : 'flex-col'}`}>
       {/* Image Area */}
       <div className={`relative bg-[#f4f4f4] pt-8 pb-8 px-4 flex items-center justify-center ${layout === 'list' ? 'sm:w-2/5 min-w-[200px]' : 'w-full'}`}>
-        {(isBestSeller || isbestseller) && (
-          <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-1.5">
+          {(isBestSeller || isbestseller) && (
             <span className="bg-[#1a1a1a] text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">
               BEST SELLER
             </span>
-          </div>
-        )}
+          )}
+          {promoType === 'FLASH_SALE' && (
+            <span className="bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider flex items-center gap-1">
+              ⚡ FLASH SALE
+            </span>
+          )}
+          {promoType === 'CATALOG_PROMOTION' && (
+            <span className="bg-amber-500 text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider flex items-center gap-1">
+              🔥 LIMITED DEAL
+            </span>
+          )}
+        </div>
         
         {mrp > price && price > 0 && (
           <div className="absolute top-3 right-3 z-10">
@@ -151,9 +171,11 @@ export function ProductCard({ id, name, slug, mrp, finalPrice, finalprice, disco
             {discount > 0 && <del className="text-[11px] text-gray-400 font-medium tracking-tight">MRP {formatCurrency(mrp)}</del>}
           </div>
           <div className="min-h-[16px] mb-4">
-            {saveAmount > 0 && (
+            {promoType === 'FLASH_SALE' && actualFsEnd ? (
+               <FlashSaleCountdown endTime={actualFsEnd} saleName={actualFsName} />
+            ) : saveAmount > 0 ? (
               <span className="text-[10px] text-green-600 font-bold">You Save: {formatCurrency(saveAmount)}</span>
-            )}
+            ) : null}
           </div>
 
           <button

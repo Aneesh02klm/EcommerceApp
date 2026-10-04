@@ -12,7 +12,7 @@ export default async function DealsPage() {
   let brands = [];
   
   try {
-      const res = await fetch(`${API}/api/v1/products?PageSize=100`, { cache: 'no-store' });
+      const res = await fetch(`${API}/api/v1/products?IsDeal=true&PageSize=100`, { cache: 'no-store' });
       const data = await res.json();
       allProducts = data.success ? data.data : (Array.isArray(data) ? data : (data.items || []));
     
@@ -26,13 +26,14 @@ export default async function DealsPage() {
       mrp: p.mrp ?? p.MRP ?? 0,
       finalprice: p.finalPrice ?? p.finalprice ?? 0,
       discount: p.discount ?? p.Discount ?? 0,
+      appliedPromotionType: p.appliedPromotionType ?? p.AppliedPromotionType,
       imageurl: p.images?.[0]?.imageUrl || p.imageurl,
       brand: brands?.find((b: any) => b.id === p.brandId)?.name || p.brand
   }));
 
   // Distinct sets
-  const flashSaleProducts = mappedProducts.filter((p: any) => p.flashSaleEndTime);
-  const catalogDeals = mappedProducts.filter((p: any) => p.discount >= 10 && !p.flashSaleEndTime);
+  const flashSaleProducts = mappedProducts.filter((p: any) => p.appliedPromotionType === 'FLASH_SALE' || p.flashSaleEndTime);
+  const catalogDeals = mappedProducts.filter((p: any) => p.appliedPromotionType === 'CATALOG_PROMOTION' || (p.discount >= 10 && p.appliedPromotionType === 'CATALOG_PROMOTION'));
 
   // Derive master timer from first flash sale product
   const masterFlashSale = flashSaleProducts.length > 0 ? flashSaleProducts[0] : null;

@@ -46,8 +46,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
   });
 
   
+  const mappedProducts = (Array.isArray(allProducts) ? allProducts : (allProducts?.items || [])).map(mapProduct);
   const mapProductPayload = {
-    banners, allCategories, allBrands
+    banners, allCategories, allBrands, allProducts: mappedProducts
   };
 
   return (

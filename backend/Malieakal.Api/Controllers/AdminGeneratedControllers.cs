@@ -11,10 +11,10 @@ namespace Malieakal.Api.Controllers
     [ApiController]
     [Route("api/v1/admin/marketing/flash-sales")]
     [Authorize(Roles = "Admin")]
-    public class FlashSalesController : ControllerBase
+    public class AdminFlashSalesController : ControllerBase
     {
         private readonly IDbConnectionFactory _db;
-        public FlashSalesController(IDbConnectionFactory db) { _db = db; }
+        public AdminFlashSalesController(IDbConnectionFactory db) { _db = db; }
         
         [HttpGet]
         public async Task<IActionResult> Get() {
