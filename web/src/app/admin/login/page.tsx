@@ -64,7 +64,7 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-[#f4f7f6] flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+      <div className="w-full md:max-w-md w-full bg-white rounded-xl shadow-lg border border-gray-100 p-8">
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 bg-[#0B192C] rounded-full flex items-center justify-center shadow-md">
             <Lock size={28} className="text-amber-400" />

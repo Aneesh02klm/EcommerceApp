@@ -150,7 +150,7 @@ export default function FlashSalesPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h1 className="text-2xl font-black text-[#0B192C]">Flash Sales</h1>
           <p className="text-sm font-medium text-gray-500">Manage time-limited sales with countdown timers.</p>

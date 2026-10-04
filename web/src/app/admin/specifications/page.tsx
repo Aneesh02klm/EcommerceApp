@@ -168,7 +168,7 @@ export default function GlobalSpecificationsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl pb-20">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h1 className="text-2xl font-black text-[#0B192C]">Specification Master</h1>
           <p className="text-sm font-medium text-gray-500">Manage all specification attributes and group them globally.</p>
@@ -189,7 +189,7 @@ export default function GlobalSpecificationsPage() {
           const groupSpecs = specs.filter(s => s.groupName === group);
           
           return (
-            <div key={group} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden transition-all">
+            <div key={group} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto overflow-y-hidden transition-all">
               <div 
                 className="bg-gray-50 px-6 py-3 flex items-center justify-between cursor-pointer select-none border-b border-transparent hover:bg-gray-100 transition-colors"
                 onClick={() => toggleGroup(group)}
@@ -250,7 +250,7 @@ export default function GlobalSpecificationsPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-xl w-full w-full md:max-w-md overflow-x-auto overflow-y-hidden">
             <div className="bg-[#0B192C] p-4 text-white flex justify-between items-center">
               <h2 className="font-bold flex items-center gap-2"><Settings2 size={18} /> {isEditing ? 'Edit' : 'New'} Attribute</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white">&times;</button>
@@ -276,7 +276,7 @@ export default function GlobalSpecificationsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Data Type</label>
                   <select value={formData.dataType} onChange={e => setFormData({...formData, dataType: e.target.value})} className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none">

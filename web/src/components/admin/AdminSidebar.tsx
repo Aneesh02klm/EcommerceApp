@@ -56,11 +56,11 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: 
     <>
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity" 
           onClick={onClose} 
         />
       )}
-      <aside className="w-[260px] bg-[#0B1526] text-[#A0AABF] flex flex-col h-screen fixed top-0 left-0 border-r border-[#1a2639] overflow-y-auto custom-scrollbar">
+      <aside className={`w-[260px] bg-[#0B1526] text-[#A0AABF] flex flex-col h-screen fixed top-0 left-0 border-r border-[#1a2639] overflow-y-auto custom-scrollbar z-50 transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
       
       {/* Brand Header */}
       <div className="p-6 pb-8 border-b border-[#1a2639]">
@@ -89,11 +89,11 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: 
                     onClick={() => toggleExpand(item.name)}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-md transition-colors text-sm font-semibold ${isParentActive ? 'text-white' : 'hover:bg-white/5 hover:text-white'}`}
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon size={18} className={isParentActive ? 'text-[#fbbf24]' : 'text-gray-400'} strokeWidth={isParentActive ? 2.5 : 2} />
-                      <span>{item.name}</span>
+                    <div className="flex items-center gap-3 flex-1 overflow-hidden pr-2">
+                      <Icon size={18} className={isParentActive ? 'text-[#fbbf24] flex-shrink-0' : 'text-gray-400 flex-shrink-0'} strokeWidth={isParentActive ? 2.5 : 2} />
+                      <span className="truncate text-left">{item.name}</span>
                     </div>
-                    {isExpanded ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
+                    {isExpanded ? <ChevronUp size={14} className="text-gray-500 flex-shrink-0" /> : <ChevronDown size={14} className="text-gray-500 flex-shrink-0" />}
                   </button>
                   
                   {isExpanded && (
@@ -104,7 +104,8 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: 
                           <Link 
                             key={child.name} 
                             href={child.href}
-                            className={`block px-3 py-2 rounded-md text-xs font-medium transition-colors ${childActive ? 'bg-white/10 text-white font-bold' : 'text-[#8a96ac] hover:text-white'}`}
+                            onClick={onClose}
+                            className={`block px-3 py-2 rounded-md text-xs font-medium transition-colors truncate ${childActive ? 'bg-white/10 text-white font-bold' : 'text-[#8a96ac] hover:text-white'}`}
                           >
                             {child.name}
                           </Link>
@@ -116,11 +117,12 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: 
               ) : (
                 <Link
                   href={item.href}
+                  onClick={onClose}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-md transition-colors text-sm font-semibold ${isActiveExact ? 'bg-white/5 text-white border-l-[3px] border-[#fbbf24]' : 'hover:bg-white/5 hover:text-white'}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon size={18} className={isActiveExact ? 'text-[#fbbf24]' : 'text-gray-400'} strokeWidth={isActiveExact ? 2.5 : 2} />
-                    <span>{item.name}</span>
+                  <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                    <Icon size={18} className={isActiveExact ? 'text-[#fbbf24] flex-shrink-0' : 'text-gray-400 flex-shrink-0'} strokeWidth={isActiveExact ? 2.5 : 2} />
+                    <span className="truncate text-left">{item.name}</span>
                   </div>
                 </Link>
               )}

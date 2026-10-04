@@ -103,7 +103,7 @@ export default function CatalogPromotions() {
 
   return (
     <div className="flex flex-col gap-8 pb-10">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <h1 className="text-xl font-bold text-[#0B192C]">Marketing &gt; Catalog Promotions</h1>
         <button onClick={() => router.push('/admin/catalog-promotions/new')} className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-[#0B192C] font-bold text-[11px] uppercase tracking-widest px-6 py-3 rounded shadow-sm">
           <Plus size={16} /> Create Promotion

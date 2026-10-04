@@ -147,7 +147,7 @@ export default function DetailedReportPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl pb-10">
-      <header className="flex items-center justify-between border-b border-gray-200 pb-6">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 border-b border-gray-200 pb-6">
         <div>
           <button onClick={() => router.back()} className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-[#0B192C] mb-3 transition-colors uppercase tracking-widest"><ArrowLeft size={14}/> Back to Reports</button>
           <h1 className="text-2xl font-black text-[#0B192C]">{reportNames[reportId] || 'Detailed Report'}</h1>
@@ -195,7 +195,7 @@ export default function DetailedReportPage({ params }: { params: Promise<{ id: s
       )}
 
       {/* Interactive Data Table */}
-      <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto overflow-y-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">

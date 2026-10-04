@@ -114,7 +114,7 @@ export default function AdminBrandsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h1 className="text-2xl font-black text-[#0B192C]">Brands Directory</h1>
           <p className="text-sm font-medium text-gray-500">Manage globally available brands.</p>
@@ -160,7 +160,7 @@ export default function AdminBrandsPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-2xl w-full w-full md:max-w-md overflow-x-auto overflow-y-hidden">
             <div className="flex justify-between items-center p-5 border-b border-gray-100">
               <h2 className="text-lg font-extrabold text-[#0B192C]">{editingBrand ? 'Edit Brand' : 'New Brand'}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>

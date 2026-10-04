@@ -109,7 +109,7 @@ export default function AdminDashboard() {
   return (
     <div className="flex flex-col gap-8 pb-10">
       {/* Top Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <h1 className="text-xl font-bold text-[#0B192C]">Dashboard</h1>
         <div className="flex items-center gap-6">
           <div className="relative">
@@ -275,7 +275,7 @@ export default function AdminDashboard() {
 
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
           <h3 className="text-lg font-bold text-[#0B192C] mb-6">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <QuickAction icon={Plus} label="Add Product" onClick={() => router.push('/admin/products/new')} />
             <QuickAction icon={Percent} label="Create Sale" onClick={() => router.push('/admin/campaigns')} />
             <QuickAction icon={Tag} label="Create Coupon" onClick={() => router.push('/admin/campaigns')} />

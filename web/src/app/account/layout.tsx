@@ -42,7 +42,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-0 md:pt-6 pb-24 md:pb-20">
+    <div className="bg-gray-50 min-h-screen pt-4 md:pt-6 pb-24 md:pb-20">
       <div className="container mx-auto px-4 max-w-7xl md:mt-0">
         {/* Mobile Sub-page Header */}
         {pathname !== '/account' && (

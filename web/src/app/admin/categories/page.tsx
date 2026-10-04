@@ -248,7 +248,7 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-20">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h1 className="text-2xl font-black text-[#0B192C]">Categories</h1>
           <p className="text-sm font-medium text-gray-500">Drag and drop rows to reorder navigation hierarchy.</p>
@@ -338,7 +338,7 @@ export default function AdminCategoriesPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Status</label>
                     <select 

@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/Button';
 export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-6 max-w-4xl">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h1 className="text-2xl font-black text-[#0B192C]">Global Settings</h1>
           <p className="text-sm font-medium text-gray-500">Configure core store parameters.</p>
         </div>
       </header>
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-6">
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Store Name</label>
             <input defaultValue="Malieakal Electronics" className="w-full border border-gray-200 rounded p-2 text-sm" />

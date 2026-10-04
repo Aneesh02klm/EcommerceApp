@@ -103,7 +103,7 @@ export default function AdminProducts() {
 
   return (
     <div className="flex flex-col gap-8 pb-10">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h2 className="text-3xl font-serif font-black text-[#0B192C] tracking-tight mb-1">Products Directory</h2>
           <p className="text-sm font-medium text-gray-500">Manage Malieakal Plaza physical & virtual premium inventory</p>
@@ -115,7 +115,7 @@ export default function AdminProducts() {
 
       <section className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <div className="p-4 flex items-center justify-between">
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 w-full md:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input 
               type="text" 
@@ -162,7 +162,7 @@ export default function AdminProducts() {
         )}
       </section>
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto overflow-y-hidden min-h-[400px]">
         {loading ? (
            <div className="p-20 flex justify-center"><Loader2 className="animate-spin text-amber-500" size={32} /></div>
         ) : products.length === 0 ? (

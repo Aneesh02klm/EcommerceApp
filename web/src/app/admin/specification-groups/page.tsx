@@ -109,7 +109,7 @@ export default function SpecificationGroupsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl pb-20">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h1 className="text-2xl font-black text-[#0B192C]">Master Groups</h1>
           <p className="text-sm font-medium text-gray-500">Manage top-level specification categories (e.g. Display, Performance).</p>
@@ -157,7 +157,7 @@ export default function SpecificationGroupsPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-xl w-full w-full md:max-w-md overflow-x-auto overflow-y-hidden">
             <div className="bg-[#0B192C] p-4 text-white flex justify-between items-center">
               <h2 className="font-bold flex items-center gap-2"><Settings2 size={18} /> {isEditing ? 'Rename' : 'New'} Master Group</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white">&times;</button>

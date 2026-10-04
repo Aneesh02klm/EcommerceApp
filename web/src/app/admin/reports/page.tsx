@@ -49,7 +49,7 @@ export default function AdminReportsDashboard() {
 
   return (
     <div className="flex flex-col gap-8 max-w-7xl pb-10">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h1 className="text-2xl font-black text-[#0B192C]">Analytics & Reports</h1>
           <p className="text-sm font-medium text-gray-500">Macro-level business metrics and granular standard reports.</p>
@@ -70,7 +70,7 @@ export default function AdminReportsDashboard() {
       {loading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-amber-500" size={32} /></div>
       ) : data?.summary ? (
-        <section className="grid grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Revenue</p>
@@ -97,7 +97,7 @@ export default function AdminReportsDashboard() {
 
       <section>
         <h2 className="text-lg font-bold text-[#0B192C] mb-4">Standard Report Bundles</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {reports.map(r => (
             <div key={r.id} onClick={() => router.push(`/admin/reports/${r.id}`)} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group flex items-start justify-between">
               <div className="flex gap-4">

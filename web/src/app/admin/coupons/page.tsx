@@ -252,13 +252,13 @@ export default function AdminCouponsPage() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-x-auto overflow-y-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h2 className="text-lg font-black text-[#0B192C]">{editingCoupon ? "Edit Coupon" : "Generate Coupon"}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Coupon Code</label>
                   <input required value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase().replace(/\s+/g, '')})} className="w-full border border-gray-200 rounded p-2 text-sm uppercase font-bold tracking-widest text-[#0B192C]" placeholder="e.g. WELCOME50" />
@@ -272,7 +272,7 @@ export default function AdminCouponsPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Discount Value</label>
                   <input required type="number" step="0.01" value={formData.discountValue} onChange={e => setFormData({...formData, discountValue: parseFloat(e.target.value)})} className="w-full border border-gray-200 rounded p-2 text-sm" />
@@ -305,7 +305,7 @@ export default function AdminCouponsPage() {
                 <label htmlFor="cannotBeCombined" className="text-sm font-bold text-[#0B192C]">Cannot be combined with other offers</label>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Usage Limit</label>
                   <input type="number" value={formData.usageLimit} onChange={e => setFormData({...formData, usageLimit: e.target.value})} className="w-full border border-gray-200 rounded p-2 text-sm" placeholder="e.g. 1 (Single use)" />

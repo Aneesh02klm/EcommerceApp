@@ -10,7 +10,7 @@ export default function AdminCampaigns() {
   return (
     <div className="flex flex-col gap-8 pb-10">
       {/* Top Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <h1 className="text-xl font-bold text-[#0B192C]">Marketing &gt; Campaigns &amp; Notifications</h1>
         <div className="flex items-center gap-6">
           <div className="relative">
@@ -38,7 +38,7 @@ export default function AdminCampaigns() {
       </section>
 
       {/* Tabs */}
-      <section className="bg-white border border-gray-200 rounded-lg shadow-sm flex items-center overflow-hidden">
+      <section className="bg-white border border-gray-200 rounded-lg shadow-sm flex items-center overflow-x-auto overflow-y-hidden">
         <Tab isActive={true} label="All Campaigns" />
         <Tab isActive={false} label="Flash Sales" />
         <Tab isActive={false} label="Coupons" />
@@ -56,7 +56,7 @@ export default function AdminCampaigns() {
       </section>
 
       {/* Data Table */}
-      <section className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 overflow-hidden flex flex-col">
+      <section className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 overflow-x-auto overflow-y-hidden flex flex-col">
         <h3 className="text-lg font-bold text-[#0B192C] mb-6">Active Curation Campaigns</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">

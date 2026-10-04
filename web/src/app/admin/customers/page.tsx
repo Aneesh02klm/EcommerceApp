@@ -37,7 +37,7 @@ export default function AdminCustomers() {
   return (
     <div className="flex flex-col gap-8 pb-10 max-w-[1400px]">
       {/* Top Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <h1 className="text-xl font-bold text-[#0B192C]">Customers</h1>
         <div className="flex items-center gap-6">
           <div className="relative">
@@ -62,7 +62,7 @@ export default function AdminCustomers() {
       </section>
 
       {/* Data Table */}
-      <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
+      <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto overflow-y-hidden flex flex-col">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <div className="flex items-center gap-2 text-[#0B192C] font-bold text-sm">
             <User size={18} className="text-amber-500" />

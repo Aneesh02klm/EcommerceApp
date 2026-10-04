@@ -155,7 +155,7 @@ export default function LogisticsAdminPage() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-xl font-bold mb-4">Distance & Base Settings</h2>
           <form onSubmit={handleSaveSettings} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Store Latitude</label>
                 <input type="number" step="any" className="w-full border rounded p-2 text-sm"

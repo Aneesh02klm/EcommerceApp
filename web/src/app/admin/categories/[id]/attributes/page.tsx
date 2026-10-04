@@ -112,7 +112,7 @@ export default function CategoryAttributesPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl pb-20">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div className="flex items-center space-x-4">
           <button onClick={() => router.push('/admin/categories')} className="text-gray-400 hover:text-[#0B192C]">
             <ArrowLeft size={24} />

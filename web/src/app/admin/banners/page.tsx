@@ -389,7 +389,7 @@ export default function AdminBannersPage() {
                     <input type="text" value={formData.linkUrl} onChange={e => setFormData({...formData, linkUrl: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none" placeholder="/products/electronics" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Category Target</label>
                       <select value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-amber-400 outline-none">
@@ -406,7 +406,7 @@ export default function AdminBannersPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Sort Order</label>
                       <input type="number" required value={formData.sortOrder} onChange={e => setFormData({...formData, sortOrder: parseInt(e.target.value) || 0})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-amber-400 outline-none" />

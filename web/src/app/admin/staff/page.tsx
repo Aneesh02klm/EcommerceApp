@@ -61,7 +61,7 @@ export default function StaffManagementPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
         <div>
           <h1 className="text-2xl font-black text-[#0B192C]">Staff Management</h1>
           <p className="text-sm font-medium text-gray-500">Manage internal users (Admins, Support, Delivery).</p>
@@ -71,7 +71,7 @@ export default function StaffManagementPage() {
         </Button>
       </header>
 
-      <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto overflow-y-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest text-gray-500 border-b border-gray-200">
             <tr>
@@ -105,13 +105,13 @@ export default function StaffManagementPage() {
       {/* Create Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-xl w-full w-full md:max-w-md overflow-x-auto overflow-y-hidden">
             <div className="bg-[#0B192C] p-4 text-white flex justify-between items-center">
               <h2 className="font-bold flex items-center gap-2"><ShieldCheck size={18} /> New Staff Account</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white">&times;</button>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">First Name</label>
                   <div className="relative">

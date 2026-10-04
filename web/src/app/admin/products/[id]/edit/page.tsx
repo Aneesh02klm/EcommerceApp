@@ -366,7 +366,7 @@ export default function EditProductPage() {
                 <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Product Name</label>
                 <input type="text" required value={formData.name} onChange={handleNameChange} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
               </div>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Slug</label>
                   <input type="text" required value={formData.slug} onChange={(e) => setFormData({...formData, slug: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded bg-gray-50 outline-none text-sm font-semibold text-gray-600" />
@@ -380,7 +380,7 @@ export default function EditProductPage() {
                 <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
                 <textarea rows={4} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
               </div>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Features (HTML allowed)</label>
                   <textarea rows={3} value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded outline-none text-sm font-semibold" />
@@ -401,7 +401,7 @@ export default function EditProductPage() {
               </Button>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 {images.map((img, i) => (
                   <div key={i} className="relative">
                     <SmartImageUpload 
@@ -450,7 +450,7 @@ export default function EditProductPage() {
                     ).map(([group, specsForGroup]: [string, any]) => (
                       <div key={group}>
                         <h4 className="text-xs font-extrabold text-[#0B192C] uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">{group}</h4>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                           {specsForGroup.map((spec: any) => (
                             <div key={spec.id}>
                               <label className="flex justify-between text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">
