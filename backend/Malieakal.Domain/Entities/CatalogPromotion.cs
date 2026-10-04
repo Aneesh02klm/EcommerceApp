@@ -10,7 +10,7 @@ namespace Malieakal.Domain.Entities
         public int? TargetId { get; set; }
         public int? TargetCategoryId { get; set; }
         public int? TargetBrandId { get; set; }
-        public System.Collections.Generic.List<SpecificProductDto> SpecificProducts { get; set; } = new();
+        public System.Collections.Generic.List<SpecificProductDto>? SpecificProducts { get; set; } = new();
         public string DiscountType { get; set; } = string.Empty; // Percentage, Flat
         public decimal DiscountValue { get; set; }
         public DateTime StartDate { get; set; }

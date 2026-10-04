@@ -66,6 +66,47 @@ namespace Malieakal.Api.Controllers
             await PopulateItems(connection, activePromos);
             return Ok(new { success = true, data = activePromos });
         }
+        [HttpGet("{id}/products")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetPreviewProducts(int id)
+        {
+            using var connection = _dbFactory.CreateConnection();
+            
+            var sqlPromo = "SELECT TargetType, TargetCategoryId, TargetBrandId FROM CatalogPromotions WHERE Id = @Id";
+            var promo = await connection.QueryFirstOrDefaultAsync<CatalogPromotion>(sqlPromo, new { Id = id });
+            
+            if (promo == null) return NotFound(new { success = false, message = "Promotion not found" });
+
+            if (promo.TargetType == "SpecificProducts")
+            {
+                var sql = "SELECT ProductId as id, Sku as sku, Name as name, Mrp as mrp FROM CatalogPromotionItems WHERE CatalogPromotionId = @Id";
+                var items = (await connection.QueryAsync(sql, new { Id = id })).ToList();
+                return Ok(new { success = true, data = new { count = items.Count, products = items } });
+            }
+            else if (promo.TargetType == "Category")
+            {
+                var countSql = "SELECT COUNT(*) FROM Products WHERE CategoryId = @TargetCategoryId";
+                var querySql = "SELECT Id as id, Sku as sku, Name as name, Mrp as mrp FROM Products WHERE CategoryId = @TargetCategoryId";
+                
+                if (promo.TargetBrandId.HasValue && promo.TargetBrandId.Value > 0)
+                {
+                    countSql += " AND BrandId = @TargetBrandId";
+                    querySql += " AND BrandId = @TargetBrandId";
+                }
+                
+                var count = await connection.ExecuteScalarAsync<int>(countSql, new { TargetCategoryId = promo.TargetCategoryId, TargetBrandId = promo.TargetBrandId });
+                var items = (await connection.QueryAsync(querySql + " LIMIT 100", new { TargetCategoryId = promo.TargetCategoryId, TargetBrandId = promo.TargetBrandId })).ToList();
+                
+                return Ok(new { success = true, data = new { count = count, products = items } });
+            }
+            else // Store
+            {
+                var count = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Products");
+                var items = (await connection.QueryAsync("SELECT Id as id, Sku as sku, Name as name, Mrp as mrp FROM Products LIMIT 100")).ToList();
+                return Ok(new { success = true, data = new { count = count, products = items } });
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {

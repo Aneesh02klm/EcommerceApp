@@ -25,9 +25,11 @@ export default function CatalogPromotionFormPage({ params }: { params?: any }) {
   const [formData, setFormData] = useState<any>({
     id: 0,
     name: '',
-    description: '',
-    discountType: 'Percentage',
+
+
     discountValue: 0,
+    discountType: 'Percentage',
+
     targetType: 'Store',
     targetCategoryId: null,
     targetBrandId: null,
@@ -79,7 +81,7 @@ export default function CatalogPromotionFormPage({ params }: { params?: any }) {
             targetType: promo.targetType || 'Store',
             targetCategoryId: promo.targetCategoryId,
             targetBrandId: promo.targetBrandId,
-            specificProducts: promo.specificProducts ? JSON.parse(promo.specificProducts) : [],
+            specificProducts: promo.specificProducts || [],
             startDate: promo.startDate ? promo.startDate.substring(0, 10) : '',
             endDate: promo.endDate ? promo.endDate.substring(0, 10) : '',
             isActive: promo.isActive
@@ -123,13 +125,21 @@ export default function CatalogPromotionFormPage({ params }: { params?: any }) {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { ...formData };
+      const payload = {
+        ...formData,
+        targetCategoryId: parseInt(formData.targetCategoryId as any) || null,
+        targetBrandId: (formData.targetType === 'Category' && parseInt(formData.targetBrandId as any)) ? parseInt(formData.targetBrandId as any) : null,
+        discountValue: parseFloat(formData.discountValue as any) || 0,
+        specificProducts: formData.targetType === 'SpecificProducts' ? formData.specificProducts : null
+      };
+//
       if (payload.targetType !== 'Category') payload.targetCategoryId = null;
-      if (payload.targetType !== 'Brand') payload.targetBrandId = null;
+      // Brand is now selected alongside Category, we clear it if not Category
+        if (payload.targetType !== 'Category') payload.targetBrandId = null;
       if (payload.targetType === 'SpecificProducts') {
-        payload.specificProducts = JSON.stringify(payload.specificProducts);
+        // payload.specificProducts is already an array, do nothing
       } else {
-        payload.specificProducts = null;
+        payload.specificProducts = [];
       }
       
       const url = formData.id ? `${API}/api/v1/catalog-promotions/${formData.id}` : `${API}/api/v1/catalog-promotions`;
@@ -220,38 +230,38 @@ export default function CatalogPromotionFormPage({ params }: { params?: any }) {
                 >
                   <option value="Store">Entire Store</option>
                   <option value="Category">Specific Category</option>
-                  <option value="Brand">Specific Brand</option>
                   <option value="SpecificProducts">Specific Products (Manual Selection)</option>
                 </select>
               </div>
 
               {formData.targetType === 'Category' && (
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Select Category</label>
-                  <select 
-                    required value={String(formData.targetCategoryId || '')} 
-                    onChange={e => setFormData({...formData, targetCategoryId: e.target.value})} 
-                    className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                  >
-                    <option value="">-- Select --</option>
-                    {categories.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
-                  </select>
-                </div>
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Select Category</label>
+                    <select 
+                      required value={String(formData.targetCategoryId || '')} 
+                      onChange={e => setFormData({...formData, targetCategoryId: e.target.value})} 
+                      className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white"
+                    >
+                      <option value="">-- Select --</option>
+                      {categories.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Brand (Optional)</label>
+                    <select 
+                      value={String(formData.targetBrandId || '')} 
+                      onChange={e => setFormData({...formData, targetBrandId: e.target.value})} 
+                      className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white"
+                    >
+                      <option value="">-- All Brands --</option>
+                      {brands.map(b => <option key={b.id} value={String(b.id)}>{b.name}</option>)}
+                    </select>
+                  </div>
+                </>
               )}
 
-              {formData.targetType === 'Brand' && (
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Select Brand</label>
-                  <select 
-                    required value={String(formData.targetBrandId || '')} 
-                    onChange={e => setFormData({...formData, targetBrandId: e.target.value})} 
-                    className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                  >
-                    <option value="">-- Select --</option>
-                    {brands.map(b => <option key={b.id} value={String(b.id)}>{b.name}</option>)}
-                  </select>
-                </div>
-              )}
+              
 
               {formData.targetType !== 'SpecificProducts' && (
                 <>
@@ -296,7 +306,7 @@ export default function CatalogPromotionFormPage({ params }: { params?: any }) {
             <div>
               <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-4">Product Selection & Granular Discounts</h3>
               <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
-                <SpecificProductsSelector value={formData.specificProducts || []} onChange={val => setFormData({...formData, specificProducts: val})} />
+                <SpecificProductsSelector value={formData.specificProducts || []} onChange={val => setFormData({...formData, specificProducts: val})} templateFilename="catalog_promotion_template.csv" />
               </div>
             </div>
           )}

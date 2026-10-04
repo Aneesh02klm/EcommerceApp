@@ -20,9 +20,10 @@ interface SelectedProduct {
 interface SpecificProductsSelectorProps {
     value: SelectedProduct[];
     onChange: (products: SelectedProduct[]) => void;
+    templateFilename?: string;
 }
 
-export default function SpecificProductsSelector({ value, onChange }: SpecificProductsSelectorProps) {
+export default function SpecificProductsSelector({ value, onChange, templateFilename = 'promo_skus_template.csv' }: SpecificProductsSelectorProps) {
     const [search, setSearch] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [categories, setCategories] = useState<any[]>([]);
@@ -84,7 +85,7 @@ export default function SpecificProductsSelector({ value, onChange }: SpecificPr
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = "promo_skus_template.csv";
+        a.download = templateFilename;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

@@ -97,7 +97,7 @@ export default function FlashSaleFormPage({ params }: { params?: any }) {
         targetCategoryId: parseInt(formData.targetCategoryId as any) || null,
           targetBrandId: (formData.targetType === 'Category' && parseInt(formData.targetBrandId as any)) ? parseInt(formData.targetBrandId as any) : null,
         discountValue: parseFloat(formData.discountValue as any) || 0,
-        specificProducts: formData.targetType === 'SpecificProducts' ? formData.specificProducts : null
+        specificProducts: formData.targetType === 'SpecificProducts' ? formData.specificProducts : []
       };
 
       const url = formData.id ? `${API}/api/v1/flash-sales/${formData.id}` : `${API}/api/v1/flash-sales`;
@@ -239,7 +239,7 @@ export default function FlashSaleFormPage({ params }: { params?: any }) {
             <div>
               <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-4">Product Selection & Granular Discounts</h3>
               <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
-                <SpecificProductsSelector value={formData.specificProducts || []} onChange={val => setFormData({...formData, specificProducts: val})} />
+                <SpecificProductsSelector value={formData.specificProducts || []} onChange={val => setFormData({...formData, specificProducts: val})} templateFilename="flash_sale_template.csv" />
               </div>
             </div>
           )}
