@@ -17,21 +17,57 @@ namespace Malieakal.Api.Controllers
     [Route("api/v1/[controller]")]
     public class StorefrontController : ControllerBase
     {
-        private async Task ApplyCatalogPromotions(IEnumerable<Malieakal.Domain.Entities.Product> products)
+                private async Task ApplyCatalogPromotions(IEnumerable<Malieakal.Domain.Entities.Product> products)
         {
             if (products == null || !products.Any()) return;
             using var connection = _db.CreateConnection();
             var activePromos = (await connection.QueryAsync<Malieakal.Domain.Entities.CatalogPromotion>(
-                "SELECT * FROM CatalogPromotions WHERE IsActive = true AND StartDate <= @Now AND EndDate >= @Now",
+                "SELECT Id, Name, TargetType, TargetId, TargetCategoryId, TargetBrandId, DiscountType, DiscountValue, StartDate, EndDate, IsActive, CreatedAt FROM CatalogPromotions WHERE IsActive = true AND StartDate <= @Now AND EndDate >= @Now",
                 new { Now = System.DateTime.UtcNow })).ToList();
 
             if (!activePromos.Any()) return;
 
+            var promoIds = activePromos.Select(p => p.Id).ToList();
+            var itemsSql = "SELECT ProductId as Id, Sku, Name, ImageUrl, Mrp, DiscountType, Discount, CatalogPromotionId FROM CatalogPromotionItems WHERE CatalogPromotionId = ANY(@Ids)";
+            var allItems = await connection.QueryAsync<dynamic>(itemsSql, new { Ids = promoIds });
+
+            foreach (var promo in activePromos) {
+                promo.SpecificProducts = allItems.Where(i => i.catalogpromotionid == promo.Id).Select(i => new Malieakal.Domain.Entities.SpecificProductDto {
+                    Id = i.id,
+                    DiscountType = i.discounttype,
+                    Discount = i.discount
+                }).ToList();
+            }
+
             foreach (var p in products)
             {
-                var promo = activePromos.FirstOrDefault(pr => pr.TargetType == "Brand" && pr.TargetId == p.BrandId)
-                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetId == p.CategoryId)
-                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Store");
+                // First check SpecificProducts
+                var specificPromo = activePromos.FirstOrDefault(pr => pr.TargetType == "SpecificProducts" && pr.SpecificProducts != null && pr.SpecificProducts.Any(i => i.Id == p.Id));
+                
+                if (specificPromo != null)
+                {
+                    var item = specificPromo.SpecificProducts.FirstOrDefault(i => i.Id == p.Id);
+                    if (item != null) {
+                        decimal discountVal = item.Discount;
+                        string dtype = item.DiscountType?.ToLower() ?? "percentage";
+                        
+                        if (dtype == "fixed" || dtype == "flat") {
+                            p.FinalPrice = p.MRP - discountVal;
+                            p.Discount = discountVal;
+                        } else {
+                            p.FinalPrice = p.MRP - (p.MRP * (discountVal / 100m));
+                            p.Discount = discountVal;
+                        }
+                        p.AppliedPromotionType = "CATALOG_PROMOTION";
+                        continue;
+                    }
+                }
+
+                // Fallback to Category/Brand/Store
+                var promo = activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetCategoryId == p.CategoryId && pr.TargetBrandId == p.BrandId)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Brand" && pr.TargetBrandId == p.BrandId)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Category" && pr.TargetCategoryId == p.CategoryId && pr.TargetBrandId == null)
+                         ?? activePromos.FirstOrDefault(pr => pr.TargetType == "Store" || (pr.TargetType == "Category" && pr.TargetCategoryId == null && pr.TargetBrandId == p.BrandId));
 
                 if (promo != null)
                 {
@@ -39,17 +75,89 @@ namespace Malieakal.Api.Controllers
                         ? p.MRP * (promo.DiscountValue / 100m) 
                         : promo.DiscountValue;
 
-                    decimal newFinalPrice = p.MRP - promoDiscount;
-                    if (newFinalPrice < p.FinalPrice)
-                    {
-                        p.FinalPrice = newFinalPrice;
-                        p.Discount = promo.DiscountValue;
-                    }
+                    p.FinalPrice = p.MRP - promoDiscount;
+                    p.Discount = promo.DiscountValue;
+                    p.AppliedPromotionType = "CATALOG_PROMOTION";
                 }
             }
         }
 
-        private readonly IStorefrontRepository _storefrontRepo;
+        private async Task ApplyCatalogPromotions(Malieakal.Domain.Entities.Product product)
+        {
+            if (product != null) await ApplyCatalogPromotions(new[] { product });
+        }
+
+        private async Task ApplyFlashSales(IEnumerable<Malieakal.Domain.Entities.Product> products)
+        {
+            if (products == null || !products.Any()) return;
+            try {
+                using var connection = _db.CreateConnection();
+                var activeFlashSales = (await connection.QueryAsync<Malieakal.Domain.Entities.FlashSale>(
+                    @"SELECT Id, Title, StartTime, EndTime, IsActive, DiscountValue, TargetType, TargetCategoryId, TargetBrandId FROM FlashSales 
+                      WHERE IsActive = true 
+                        AND (NOW() AT TIME ZONE 'UTC') BETWEEN StartTime AND EndTime")).ToList();
+
+                if (!activeFlashSales.Any()) return;
+
+                var saleIds = activeFlashSales.Select(s => s.Id).ToList();
+                var itemsSql = "SELECT ProductId as Id, Sku, Name, ImageUrl, Mrp, DiscountType, Discount, FlashSaleId FROM FlashSaleItems WHERE FlashSaleId = ANY(@Ids)";
+                var allItems = await connection.QueryAsync<dynamic>(itemsSql, new { Ids = saleIds });
+
+                foreach (var sale in activeFlashSales) {
+                    sale.SpecificProducts = allItems.Where(i => i.flashsaleid == sale.Id).Select(i => new Malieakal.Domain.Entities.SpecificProductDto {
+                        Id = i.id,
+                        DiscountType = i.discounttype,
+                        Discount = i.discount
+                    }).ToList();
+                }
+
+                foreach (var p in products)
+                {
+                    // Specific Products
+                    var specificSale = activeFlashSales.FirstOrDefault(fs => fs.TargetType == "SpecificProducts" && fs.SpecificProducts != null && fs.SpecificProducts.Any(i => i.Id == p.Id));
+                    if (specificSale != null)
+                    {
+                        var item = specificSale.SpecificProducts.FirstOrDefault(i => i.Id == p.Id);
+                        if (item != null) {
+                            decimal discountVal = item.Discount;
+                            string dtype = item.DiscountType?.ToLower() ?? "percentage";
+                            
+                            if (dtype == "fixed" || dtype == "flat") {
+                                p.FinalPrice = p.MRP - discountVal;
+                                p.Discount = discountVal;
+                            } else {
+                                p.FinalPrice = p.MRP - (p.MRP * (discountVal / 100m));
+                                p.Discount = discountVal;
+                            }
+                            
+                            p.FlashSaleName = specificSale.Title;
+                            p.FlashSaleEndTime = specificSale.EndTime;
+                            continue;
+                        }
+                    }
+
+                    var sale = activeFlashSales.FirstOrDefault(fs => 
+                        fs.TargetType == "Store" || 
+                        fs.TargetType == "Brand" && fs.TargetBrandId == p.BrandId ||
+                        (fs.TargetType == "Category" && fs.TargetCategoryId == p.CategoryId) || (fs.TargetCategoryId == 0) ||
+                        (fs.TargetCategoryId == p.CategoryId && p.CategoryId != null));
+
+                    if (sale != null)
+                    {
+                        p.FinalPrice = p.MRP - (p.MRP * (sale.DiscountValue / 100m));
+                        p.FlashSaleName = sale.Title;
+                        p.FlashSaleEndTime = sale.EndTime;
+                    }
+                }
+            } catch { }
+        }
+
+        private async Task ApplyFlashSales(Malieakal.Domain.Entities.Product product)
+        {
+            if (product != null) await ApplyFlashSales(new[] { product });
+        }
+
+private readonly IStorefrontRepository _storefrontRepo;
         private readonly ICategoryRepository _categoryRepo;
         private readonly IBrandRepository _brandRepo;
         private readonly IProductRepository _productRepo;

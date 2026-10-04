@@ -5,10 +5,12 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
 import { Loader2, Plus, Edit2, Trash2, Settings2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
 export default function SpecificationGroupsPage() {
+  const { confirm } = useConfirm();
   const { token } = useAuthStore();
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,8 +68,12 @@ export default function SpecificationGroupsPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this master group?')) return;
+  const handleDelete = (id: number) => {
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this master group?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
     try {
       const res = await fetch(`${API}/api/v1/specifications/groups/${id}`, {
         method: 'DELETE',
@@ -83,6 +89,8 @@ export default function SpecificationGroupsPage() {
     } catch (err) {
       toast.error('Network error. Failed to delete');
     }
+      }
+    });
   };
 
   const openNew = () => {

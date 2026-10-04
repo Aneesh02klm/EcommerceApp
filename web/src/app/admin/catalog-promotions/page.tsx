@@ -3,12 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
+import SpecificProductsSelector from '@/components/admin/SpecificProductsSelector';
 import { Search, Plus, Edit2, Trash2, Eye, Tag } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
 export default function CatalogPromotions() {
+  const { confirm } = useConfirm();
   const token = useAuthStore(s => s.token);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -16,7 +19,7 @@ export default function CatalogPromotions() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<any>({
-    name: '', targetType: 'Store', targetCategoryId: '', targetBrandId: '', discountType: 'Percentage', discountValue: 0,
+    name: '', targetType: 'Store', targetCategoryId: '', targetBrandId: '', specificProducts: [], discountType: 'Percentage', discountValue: 0,
     startDate: new Date().toISOString().split('T')[0], endDate: new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0], isActive: true
   });
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -53,7 +56,7 @@ export default function CatalogPromotions() {
     const payload = {
       ...formData,
       targetCategoryId: formData.targetType === 'Category' ? (parseInt(formData.targetCategoryId) || null) : null,
-      targetBrandId: (formData.targetType === 'Brand' || formData.targetType === 'Category') ? (parseInt(formData.targetBrandId) || null) : null,
+      targetBrandId: (formData.targetType === 'Category') ? (parseInt(formData.targetBrandId) || null) : null,
       startDate: new Date(formData.startDate).toISOString(),
       endDate: new Date(formData.endDate).toISOString(),
     };
@@ -81,10 +84,16 @@ export default function CatalogPromotions() {
     fetchPromotions();
   };
 
-  const deletePromo = async (id: number) => {
-    if(!confirm('Are you sure?')) return;
-    await fetch(`${API}/api/v1/catalog-promotions/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-    fetchPromotions();
+  const deletePromo = (id: number) => {
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Are you sure?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        await fetch(`${API}/api/v1/catalog-promotions/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        fetchPromotions();
+      }
+    });
   };
 
   const openPreview = async (id: number) => {
@@ -116,7 +125,7 @@ export default function CatalogPromotions() {
     <div className="flex flex-col gap-8 pb-10">
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-[#0B192C]">Marketing &gt; Catalog Promotions</h1>
-        <button onClick={() => { setEditingId(null); setFormData({name: '', targetType: 'Store', targetCategoryId: '', targetBrandId: '', discountType: 'Percentage', discountValue: 0, startDate: new Date().toISOString().split('T')[0], endDate: new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0], isActive: true}); setIsModalOpen(true); }} className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-[#0B192C] font-bold text-[11px] uppercase tracking-widest px-6 py-3 rounded shadow-sm">
+        <button onClick={() => { setEditingId(null); setFormData({name: '', targetType: 'Store', targetCategoryId: '', targetBrandId: '', specificProducts: [], discountType: 'Percentage', discountValue: 0, startDate: new Date().toISOString().split('T')[0], endDate: new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0], isActive: true}); setIsModalOpen(true); }} className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-[#0B192C] font-bold text-[11px] uppercase tracking-widest px-6 py-3 rounded shadow-sm">
           <Plus size={16} /> Create Promotion
         </button>
       </header>
@@ -178,10 +187,10 @@ export default function CatalogPromotions() {
               <div className="flex gap-4 p-4 bg-gray-50 rounded border border-gray-200">
                 <div className="flex-1">
                   <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Target Type</label>
-                  <select value={formData.targetType} onChange={e => setFormData({...formData, targetType: e.target.value, targetCategoryId: '', targetBrandId: ''})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
+                  <select value={formData.targetType} onChange={e => setFormData({...formData, targetType: e.target.value, targetCategoryId: '', targetBrandId: '', specificProducts: []})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
                     <option value="Store">Entire Store</option>
                     <option value="Category">Specific Category</option>
-                    <option value="Brand">Specific Brand</option>
+                    
                   </select>
                 </div>
                 
@@ -204,32 +213,28 @@ export default function CatalogPromotions() {
                   </>
                 )}
                 
-                {formData.targetType === 'Brand' && (
-                  <div className="flex-1">
-                    <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Brand</label>
-                    <select required value={String(formData.targetBrandId || '')} onChange={e => setFormData({...formData, targetBrandId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
-                      <option value="">-- Select --</option>
-                      {brands.map(b => <option key={b.id} value={String(b.id)}>{b.name}</option>)}
-                    </select>
-                  </div>
-                )}
+                
               </div>
               
               <div className="flex gap-4">
-                <div className="flex-1">
+                {formData.targetType !== 'SpecificProducts' && (<div className="flex-1">
                   <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Discount Value</label>
                   <input type="number" step="0.01" required min={0} value={formData.discountValue} onChange={e => setFormData({...formData, discountValue: parseFloat(e.target.value) || 0})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
-                </div>
-                <div className="flex-1">
+                </div>)}
+                {formData.targetType !== 'SpecificProducts' && (<div className="flex-1">
                   <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Discount Type</label>
                   <select value={formData.discountType} onChange={e => setFormData({...formData, discountType: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold">
                     <option value="Percentage">Percentage (%)</option>
                     <option value="Flat">Flat Amount (\u20B9)</option>
                   </select>
-                </div>
+                </div>)}
               </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
+              
+                {formData.targetType === 'SpecificProducts' && (
+                    <SpecificProductsSelector value={formData.specificProducts || []} onChange={val => setFormData({...formData, specificProducts: val})} />
+                )}
+                <div className="flex gap-4 mt-4">
+                  <div className="flex-1">
                   <label className="block text-[11px] font-extrabold text-gray-700 uppercase tracking-widest mb-1.5">Start Date</label>
                   <input type="date" required value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
                 </div>

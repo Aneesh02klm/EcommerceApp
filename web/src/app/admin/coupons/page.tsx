@@ -6,10 +6,12 @@ import { toast } from '@/components/ui/Toast';
 import { Search, Loader2, Plus, Mail, Infinity as InfinityIcon, Edit2, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Select from 'react-select';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
 export default function AdminCouponsPage() {
+  const { confirm } = useConfirm();
   const { token } = useAuthStore();
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,8 +89,12 @@ export default function AdminCouponsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this coupon?')) return;
+  const handleDelete = (id: number) => {
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this coupon?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
     try {
       const res = await fetch(`${API}/api/v1/coupons/admin/${id}`, {
         method: 'DELETE',
@@ -101,6 +107,8 @@ export default function AdminCouponsPage() {
     } catch (e) {
       toast.error('Error deleting coupon');
     }
+      }
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

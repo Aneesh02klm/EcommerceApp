@@ -214,14 +214,14 @@ function SortableSection({ section, updateSection, categories, brands, products 
                     <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-2">Selection Mode ({isLightning ? 'Lightning Deals' : isNewArrivals ? 'New Arrivals' : isBestSellers ? 'Best Sellers' : 'Generic Grid'})</label>
                     <select value={section.queryType || 'Manual'} onChange={e => updateSection(section.id, { queryType: e.target.value, bestSellerLogic: '', minDiscountThreshold: 20, newArrivalsDate: '' })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold text-[#0B192C]">
                       <option value="Manual">Manual Selection</option>
-                      {isLightning && <option value="LightningDeals">Automated by Discount Percentage</option>}
+                      {isLightning && <option value="LightningDeals">Automated by Active Catalog Promotions</option>}
                       {isNewArrivals && <option value="NewArrivals">Automated by Date</option>}
                       {isBestSellers && <option value="BestSellers">Automated by Sales</option>}
                       {(!isLightning && !isNewArrivals && !isBestSellers) && (
                           <>
                               <option value="NewArrivals">Automated: New Arrivals</option>
                               <option value="BestSellers">Automated: Best Sellers</option>
-                              <option value="LightningDeals">Automated: Lightning Deals</option>
+                              <option value="LightningDeals">Automated: Active Promotions</option>
                           </>
                       )}
                     </select>
@@ -235,23 +235,7 @@ function SortableSection({ section, updateSection, categories, brands, products 
                   )}
                 </div>
                 
-                {section.queryType === 'LightningDeals' && isLightning && (
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                      <div className="md:col-span-4 bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                        <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Minimum Discount (%)</label>
-                        <input type="number" min="0" max="100" value={section.minDiscountThreshold ?? 20} onChange={e => updateSection(section.id, { minDiscountThreshold: parseInt(e.target.value) || 0 })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold" />
-                      </div>
-                    </div>
-                )}
-  
-                {section.queryType === 'NewArrivals' && isNewArrivals && (
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                      <div className="md:col-span-5 bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                        <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Products Added After (Date)</label>
-                        <input type="date" value={section.newArrivalsDate || ''} onChange={e => updateSection(section.id, { newArrivalsDate: e.target.value })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold text-gray-700" />
-                      </div>
-                    </div>
-                )}
+                
   
                 {section.queryType === 'BestSellers' && isBestSellers && (
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-5">

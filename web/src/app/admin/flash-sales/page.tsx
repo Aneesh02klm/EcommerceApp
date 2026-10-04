@@ -1,12 +1,16 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Timer, Plus, Edit2, Trash2, X, Check, Search, ExternalLink } from 'lucide-react';
+import { Timer, Plus, Edit2, Trash2, Search, ExternalLink } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
 export default function FlashSalesPage() {
+  const { confirm } = useConfirm();
+  const router = useRouter();
   const [sales, setSales] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,33 +55,10 @@ export default function FlashSalesPage() {
 
   const handleOpenModal = (sale: any = null) => {
     if (sale) {
-      setFormData({
-        id: sale.id,
-        title: sale.title,
-        startTime: sale.startTime ? sale.startTime.substring(0, 16) : '',
-        endTime: sale.endTime ? sale.endTime.substring(0, 16) : '',
-        isActive: sale.isActive,
-        discountValue: sale.discountValue || 0,
-        targetType: sale.targetType || 'Category',
-        targetCategoryId: sale.targetCategoryId || 0
-      });
+        router.push('/admin/flash-sales/' + sale.id);
     } else {
-      const start = new Date();
-      const end = new Date();
-      end.setDate(end.getDate() + 2);
-      
-      setFormData({
-        id: 0,
-        title: '',
-        startTime: start.toISOString().substring(0, 16),
-        endTime: end.toISOString().substring(0, 16),
-        isActive: true,
-        discountValue: 10,
-        targetType: 'Category',
-        targetCategoryId: categories.length > 0 ? categories[0].id : 0
-      });
+        router.push('/admin/flash-sales/new');
     }
-    setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,8 +89,12 @@ export default function FlashSalesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Delete this flash sale?')) return;
+  const handleDelete = (id: number) => {
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Delete this flash sale?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
     try {
       const res = await fetch(`${API}/api/v1/flash-sales/${id}`, {
         method: 'DELETE',
@@ -120,6 +105,8 @@ export default function FlashSalesPage() {
         fetchSales();
       }
     } catch (err) {}
+      }
+    });
   };
 
   return (
@@ -190,74 +177,6 @@ export default function FlashSalesPage() {
         </div>
       )}
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-[#0B192C]/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-lg font-black text-[#0B192C]">{formData.id ? 'Edit Flash Sale' : 'New Flash Sale'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 transition-colors"><X size={20}/></button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div>
-                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Sale Title</label>
-                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all" placeholder="e.g. Weekend Mega Sale" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Start Time</label>
-                  <input required type="datetime-local" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">End Time</label>
-                  <input required type="datetime-local" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Discount (%)</label>
-                  <div className="relative">
-                    <input required type="number" min="0" max="100" step="0.01" value={formData.discountValue} onChange={e => setFormData({...formData, discountValue: parseFloat(e.target.value)})} className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none pl-10" />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">%</span>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Status</label>
-                  <div className="flex items-center h-[46px]">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                      <span className="ml-3 text-sm font-bold text-gray-700">{formData.isActive ? 'Active' : 'Disabled'}</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Target Category</label>
-                <select 
-                    value={formData.targetCategoryId} 
-                    onChange={e => setFormData({...formData, targetCategoryId: Number(e.target.value)})} 
-                    className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                >
-                    <option value="0">All Products (Global)</option>
-                    {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="pt-2">
-                <button type="submit" className="w-full bg-amber-500 hover:bg-amber-400 text-[#0B192C] font-black py-3.5 rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <Check size={18} /> {formData.id ? 'Save Changes' : 'Create Flash Sale'}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
-    </div>
   );
 }

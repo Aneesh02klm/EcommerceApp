@@ -257,8 +257,6 @@ namespace Malieakal.Api.Controllers
             if (request.PaymentMethod == "COD")
             {
                 order.Status = "Confirmed";
-                    
-                    
                 if (!string.IsNullOrEmpty(order.PromoCode)) { await _couponRepository.IncrementUsageAsync(order.PromoCode); }
                 
                 await _orderRepository.AddStatusHistoryAsync(order.Id, "Placed", "Order paid successfully via Razorpay.");

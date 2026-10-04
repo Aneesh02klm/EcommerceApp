@@ -10,6 +10,7 @@ import { NotificationBell } from '@/components/ui/NotificationBell';
 import { AppInitializer } from '@/components/ui/AppInitializer';
 import { GlobalFetchErrorInterceptor } from '@/components/ui/GlobalFetchErrorInterceptor';
 import { ToastContainer } from '@/components/ui/Toast';
+import { ConfirmProvider } from '@/components/ui/ConfirmProvider';
 import { CompareBar } from '@/components/ui/CompareBar';
 import { HideOnAdmin } from '@/components/ui/HideOnAdmin';
 import { WishlistNavBadge } from '@/components/ui/WishlistNavBadge';
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta charSet="utf-8" />
       </head>
       <body className={`${inter.className} bg-gray-50 text-gray-800 flex flex-col min-h-screen`}>
+        <ConfirmProvider>
 
         {/* ─── TOP BAR ─────────────────────────────────────────── */}
         <HideOnAdmin>
@@ -285,8 +287,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CompareBar />
         </HideOnAdmin>
         <ToastContainer />
+        
         <AppInitializer />
         <GlobalFetchErrorInterceptor />
+        
+              </ConfirmProvider>
       </body>
     </html>
   );

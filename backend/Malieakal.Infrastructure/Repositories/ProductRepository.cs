@@ -225,9 +225,11 @@ namespace Malieakal.Infrastructure.Repositories
                 int specIndex = 0;
                 foreach (var spec in query.SpecFilters)
                 {
-                    sql.Append($" AND EXISTS (SELECT 1 FROM ProductSpecifications ps{specIndex} WHERE ps{specIndex}.ProductId = p.Id AND ps{specIndex}.SpecificationDefinitionId = @SpecDef{specIndex} AND ps{specIndex}.Value = @SpecVal{specIndex}) ");
+                    if (string.IsNullOrWhiteSpace(spec.Value)) continue;
+                    var vals = spec.Value.Split(',').Select(v => v.Trim()).ToList();
+                    sql.Append($" AND EXISTS (SELECT 1 FROM ProductSpecifications ps{specIndex} WHERE ps{specIndex}.ProductId = p.Id AND ps{specIndex}.SpecificationDefinitionId = @SpecDef{specIndex} AND ps{specIndex}.Value = ANY(@SpecVal{specIndex})) ");
                     parameters.Add($"SpecDef{specIndex}", spec.Key);
-                    parameters.Add($"SpecVal{specIndex}", spec.Value);
+                    parameters.Add($"SpecVal{specIndex}", vals);
                     specIndex++;
                 }
             }

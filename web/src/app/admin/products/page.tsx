@@ -5,6 +5,7 @@ import { Search, Plus, Filter, Edit2, Trash2, Loader2, Package, X } from 'lucide
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
@@ -19,6 +20,7 @@ function useDebounce(value: string, delay: number) {
 }
 
 export default function AdminProducts() {
+  const { confirm } = useConfirm();
   const router = useRouter();
   const { token } = useAuthStore();
   const [products, setProducts] = useState<any[]>([]);
@@ -78,8 +80,12 @@ export default function AdminProducts() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if(!confirm('Are you sure you want to delete this product?')) return;
+  const handleDelete = (id: string) => {
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this product?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
     try {
       const res = await fetch(`${API}/api/v1/products/${id}`, {
         method: 'DELETE',
@@ -91,6 +97,8 @@ export default function AdminProducts() {
         fetchProducts();
       }
     } catch(err) {}
+      }
+    });
   };
 
   return (

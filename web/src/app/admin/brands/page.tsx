@@ -6,6 +6,7 @@ import { toast } from '@/components/ui/Toast';
 import { Loader2, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { SmartImageUpload } from '@/components/ui/SmartImageUpload';
 import { Button } from '@/components/ui/Button';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
@@ -17,6 +18,7 @@ interface Brand {
 }
 
 export default function AdminBrandsPage() {
+  const { confirm } = useConfirm();
   const { token } = useAuthStore();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,8 +90,12 @@ export default function AdminBrandsPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete this brand? This may break products tied to it.')) return;
+  const handleDelete = (id: number) => {
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Delete this brand? This may break products tied to it.',
+      confirmText: 'Delete',
+      onConfirm: async () => {
     try {
       const res = await fetch(`${API}/api/v1/brands/${id}`, {
         method: 'DELETE',
@@ -102,6 +108,8 @@ export default function AdminBrandsPage() {
     } catch (err) {
       toast.error('Failed to delete');
     }
+      }
+    });
   };
 
   return (

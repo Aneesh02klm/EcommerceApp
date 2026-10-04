@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
 
@@ -81,6 +82,7 @@ function SortableRow({ category, router, handleOpenModal, handleDelete }: { cate
 }
 
 export default function AdminCategoriesPage() {
+  const { confirm } = useConfirm();
   const router = useRouter();
   const { token } = useAuthStore();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -197,8 +199,12 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+  const handleDelete = (id: number) => {
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this category?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
     try {
       const res = await fetch(`${API}/api/v1/categories/${id}`, {
         method: 'DELETE',
@@ -213,6 +219,8 @@ export default function AdminCategoriesPage() {
     } catch (err) {
       toast.error('Failed to delete category');
     }
+      }
+    });
   };
 
   const handleOpenModal = (category?: Category) => {

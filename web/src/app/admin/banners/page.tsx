@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/Card';
 import ReactCrop, { centerCrop, makeAspectCrop, Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import imageCompression from 'browser-image-compression';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 
 interface Banner {
   id: number;
@@ -41,6 +42,7 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
 }
 
 export default function AdminBannersPage() {
+  const { confirm } = useConfirm();
   const { token } = useAuthStore();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,8 +229,12 @@ export default function AdminBannersPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this banner?')) return;
+  const handleDelete = (id: number) => {
+    confirm({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this banner?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
     try {
       const res = await fetch(`${API}/api/v1/banners/admin/${id}`, {
         method: 'DELETE',
@@ -241,6 +247,8 @@ export default function AdminBannersPage() {
     } catch (error) {
       toast.error('Error deleting banner');
     }
+      }
+    });
   };
 
   return (
