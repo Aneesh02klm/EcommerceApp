@@ -16,5 +16,6 @@ namespace Malieakal.Application.Models
         public bool? InStockOnly { get; set; }
         public bool? IsActive { get; set; }
         public bool? IsDeal { get; set; }
+        public string? PromoType { get; set; }
     }
 }

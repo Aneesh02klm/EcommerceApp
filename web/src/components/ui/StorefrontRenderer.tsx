@@ -76,8 +76,15 @@ export function StorefrontRenderer({ initialConfig, banners, API, mapProductPayl
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {flashSaleProducts.slice(0, 10).map((p: any) => <ProductCard key={p.id} {...p} />)}
+                  {flashSaleProducts.slice(0, section.maxItems || 10).map((p: any) => <ProductCard key={p.id} {...p} />)}
                 </div>
+                {flashSaleProducts.length > (section.maxItems || 10) && (
+                  <div className="mt-10 text-center">
+                    <Link href="/products?promoType=FLASH_SALE" className="inline-flex items-center justify-center bg-white border-2 border-red-200 text-red-700 font-extrabold uppercase tracking-widest text-[11px] px-8 py-3.5 rounded hover:border-red-600 hover:bg-red-50 transition-colors">
+                      View More Flash Sales <ArrowRight size={14} className="ml-2" />
+                    </Link>
+                  </div>
+                )}
               </div>
             </section>
           );
@@ -190,7 +197,7 @@ export function StorefrontRenderer({ initialConfig, banners, API, mapProductPayl
                 </div>
               {section.hasMore && (
                   <div className="mt-10 text-center">
-                    <Link href="/products" className="inline-flex items-center justify-center bg-white border-2 border-gray-200 text-[#0B192C] font-extrabold uppercase tracking-widest text-[11px] px-8 py-3.5 rounded hover:border-[#0B192C] transition-colors">
+                    <Link href="/products?promoType=CATALOG_PROMOTION" className="inline-flex items-center justify-center bg-white border-2 border-gray-200 text-[#0B192C] font-extrabold uppercase tracking-widest text-[11px] px-8 py-3.5 rounded hover:border-[#0B192C] transition-colors">
                       View More Deals <ArrowRight size={14} className="ml-2" />
                     </Link>
                   </div>

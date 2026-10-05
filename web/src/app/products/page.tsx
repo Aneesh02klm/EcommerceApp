@@ -29,7 +29,7 @@ const SORTS = [
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const params = await searchParams;
-  const { brand = '', q = '', sort = '', deal = '', inStockOnly = '' } = params;
+  const { brand = '', q = '', sort = '', deal = '', inStockOnly = '', promoType = '' } = params;
 
   const [categories, brands] = await Promise.all([
     get('/api/v1/categories'),
@@ -43,6 +43,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   if (q) qs.append('Keyword', q);
   if (sort) qs.append('SortBy', sort);
   if (inStockOnly === 'true') qs.append('InStockOnly', 'true');
+  if (promoType) qs.append('PromoType', promoType);
+  if (deal === 'true') qs.append('IsDeal', 'true');
     if (params.minPrice) qs.append('MinPrice', params.minPrice);
     if (params.maxPrice) qs.append('MaxPrice', params.maxPrice);
     Object.keys(params).forEach(k => {
@@ -68,13 +70,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
 
   const products = (productsRaw || []).map(mapProduct);
 
-  const filteredProducts = deal === 'true'
-    ? products.filter((p: any) => p.discount > 0)
-    : products;
+  const filteredProducts = products; // Backend now naturally filters if PromoType or IsDeal is passed
 
   const breadcrumbs = [
     { label: 'Home', href: '/' },
-    { label: 'Products', href: '/products' },
+    { label: promoType === 'FLASH_SALE' ? 'Flash Sales' : promoType === 'CATALOG_PROMOTION' ? 'Top Deals' : 'Products', href: '/products' },
     ...(activeBrand ? [{ label: activeBrand.name, href: `/products?brand=${brand}` }] : []),
     ...(q ? [{ label: `"${q}"`, href: `/products?q=${q}` }] : []),
   ];

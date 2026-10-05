@@ -196,8 +196,14 @@ function SortableSection({ section, updateSection, categories, brands, products 
           )}
   
           {section.type === 'FlashSalesGrid' && (
-              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg flex items-center justify-center text-blue-500 font-bold">
-                This block will automatically display the master Countdown Timer and products targeted by the Active Flash Sale.
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg flex flex-col items-center justify-center text-blue-500 font-bold gap-4 md:flex-row md:justify-between text-center md:text-left">
+                <div>
+                  This block will automatically display the master Countdown Timer and products targeted by the Active Flash Sale.
+                </div>
+                <div className="bg-white border border-blue-100 p-3 rounded-lg flex flex-col justify-center min-w-[150px] shadow-sm">
+                  <label className="block text-[10px] font-extrabold text-gray-700 uppercase tracking-widest mb-2">Max Items</label>
+                  <input type="number" min="1" max="50" value={section.maxItems || 10} onChange={e => updateSection(section.id, { maxItems: parseInt(e.target.value) || 10 })} className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white focus:ring-1 outline-none font-bold text-gray-900" />
+                </div>
               </div>
             )}
 

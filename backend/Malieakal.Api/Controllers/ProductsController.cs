@@ -132,7 +132,8 @@ namespace Malieakal.Api.Controllers
                             
                             p.FlashSaleName = specificSale.Title;
                             p.FlashSaleEndTime = specificSale.EndTime;
-                            continue; // Skip fallback
+                              p.AppliedPromotionType = "FLASH_SALE";
+                              continue; // Skip fallback
                         }
                     }
 
@@ -147,6 +148,7 @@ namespace Malieakal.Api.Controllers
                         p.FinalPrice = p.MRP - (p.MRP * (sale.DiscountValue / 100m));
                         p.FlashSaleName = sale.Title;
                         p.FlashSaleEndTime = sale.EndTime;
+                        p.AppliedPromotionType = "FLASH_SALE";
                     }
                 }
             } catch (Exception ex) {
@@ -186,7 +188,9 @@ private readonly IProductRepository _productRepository;
             await ApplyCatalogPromotions(products);
             await ApplyFlashSales(products);
             
-            if (query.IsDeal == true) {
+            if (!string.IsNullOrEmpty(query.PromoType)) {
+                products = products.Where(p => p.AppliedPromotionType == query.PromoType).ToList();
+            } else if (query.IsDeal == true) {
                 products = products.Where(p => p.AppliedPromotionType == "CATALOG_PROMOTION" || p.AppliedPromotionType == "FLASH_SALE").ToList();
             }
             
