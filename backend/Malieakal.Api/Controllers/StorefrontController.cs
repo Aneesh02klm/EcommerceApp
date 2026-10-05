@@ -272,14 +272,11 @@ private readonly IStorefrontRepository _storefrontRepo;
                     }
                     else if (queryType == "LightningDeals")
                     {
-                        decimal discountThreshold = 20m;
-                        if (decimal.TryParse(section["minDiscountThreshold"]?.ToString(), out decimal d)) discountThreshold = d;
-
-                        var items = allProducts.Where(p => p.MRP > 0 && p.MRP > p.FinalPrice)
-                                               .Where(p => ((p.MRP - p.FinalPrice) / p.MRP) * 100m >= discountThreshold)
-                                               .OrderByDescending(p => (p.MRP - p.FinalPrice) / p.MRP)
-                                               .Take(maxItems).ToList();
+                        var affectedItems = allProducts.Where(p => p.AppliedPromotionType == "CATALOG_PROMOTION").ToList();
+                        
+                        var items = affectedItems.OrderByDescending(p => p.CreatedAt).Take(maxItems).ToList();
                         section["items"] = JsonSerializer.SerializeToNode(items, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                        section["hasMore"] = affectedItems.Count > maxItems;
                     }
                     else
                     {

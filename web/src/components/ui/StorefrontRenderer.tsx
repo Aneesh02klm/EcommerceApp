@@ -188,7 +188,14 @@ export function StorefrontRenderer({ initialConfig, banners, API, mapProductPayl
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {items.map((p: any) => <ProductCard key={p.id} {...p} />)}
                 </div>
-              </div>
+              {section.hasMore && (
+                  <div className="mt-10 text-center">
+                    <Link href="/products" className="inline-flex items-center justify-center bg-white border-2 border-gray-200 text-[#0B192C] font-extrabold uppercase tracking-widest text-[11px] px-8 py-3.5 rounded hover:border-[#0B192C] transition-colors">
+                      View More Deals <ArrowRight size={14} className="ml-2" />
+                    </Link>
+                  </div>
+                )}
+                </div>
             </section>
           );
         }

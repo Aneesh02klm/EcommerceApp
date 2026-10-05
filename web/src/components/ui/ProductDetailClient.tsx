@@ -11,8 +11,7 @@ import { formatCurrency } from '@/lib/formatCurrency';
 import { FlashSaleCountdown } from '@/components/ui/FlashSaleCountdown';
 
 export function ProductDetailClient({ product, category, brand, specifications, relatedProducts, API }: any) {
-  const [selectedVariant, setSelectedVariant] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('description');
+    const [activeTab, setActiveTab] = useState('description');
   const [pincode, setPincode] = useState('');
   const [deliveryInfo, setDeliveryInfo] = useState<string | null>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
@@ -39,25 +38,11 @@ export function ProductDetailClient({ product, category, brand, specifications, 
   }, [product]);
 
   const discountAmount = product.mrp - product.finalPrice;
-  const activePrice = product.finalPrice;
-  const activeMrp = product.mrp;
-  const activeStock = selectedVariant ? selectedVariant.stock : product.stock;
-
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (product.variants && product.variants.length > 0) {
-      const v = product.variants[0];
-      try {
-        const attrs = typeof v.attributesJSON === 'string' ? JSON.parse(v.attributesJSON) : (v.attributesJSON || {});
-        setSelectedOptions(attrs);
-        setSelectedVariant(v);
-      } catch(e) {}
-    }
-  }, [product]);
-
+      
+  
+  
   const handleOptionSelect = (key: string, val: string) => {
-    const newOpts = { ...selectedOptions, [key]: val };
+    const newOpts = { ...({}), [key]: val };
     
     // Attempt exact match
     let match = product.variants.find((v: any) => {
@@ -68,8 +53,8 @@ export function ProductDetailClient({ product, category, brand, specifications, 
     });
 
     if (match) {
-      setSelectedOptions(newOpts);
-      setSelectedVariant(match);
+      // setSelectedOptions(newOpts);
+      // setSelectedVariant(match);
     } else {
       // If exact combination doesn't exist, find the first variant that has this new option
       match = product.variants.find((v: any) => {
@@ -81,8 +66,8 @@ export function ProductDetailClient({ product, category, brand, specifications, 
       if (match) {
         try {
           const attrs = typeof match.attributesJSON === 'string' ? JSON.parse(match.attributesJSON) : (match.attributesJSON || {});
-          setSelectedOptions(attrs);
-          setSelectedVariant(match);
+          // setSelectedOptions(attrs);
+          // setSelectedVariant(match);
         } catch(e) {}
       }
     }
@@ -134,9 +119,7 @@ export function ProductDetailClient({ product, category, brand, specifications, 
     }
   };
 
-  const images = selectedVariant && selectedVariant.imageUrl 
-                 ? [{ imageUrl: selectedVariant.imageUrl, isPrimary: true }, ...(product.images || [])] 
-                 : (product.images || []);
+  const images = product.images || [];
 
   const richMedia = product.richMedia || [];
 
@@ -214,19 +197,19 @@ export function ProductDetailClient({ product, category, brand, specifications, 
                   4.5 <span className="mx-1 text-gray-300">|</span> 238 Verified Reviews
                 </span>
                 <span className="mx-2 text-gray-300">|</span>
-                <span className={`text-[11px] font-black tracking-widest uppercase ${activeStock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                  {activeStock > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
+                <span className={`text-[11px] font-black tracking-widest uppercase ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                  {product.stock > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
                 </span>
               </div>
             </div>            {/* 2. Price Block */}
             <div className="mb-6">
               <div className="flex items-baseline gap-3 mb-1">
-                <span className="text-[40px] font-black text-[#0B192C] tracking-tight">{formatCurrency(activePrice)}</span>
-                {activeMrp > activePrice && activePrice > 0 && (
+                <span className="text-[40px] font-black text-[#0B192C] tracking-tight">{formatCurrency(product.finalPrice)}</span>
+                {product.mrp > product.finalPrice && product.finalPrice > 0 && (
                     <>
-                      <span className="text-lg text-gray-400 line-through font-medium">MRP {formatCurrency(activeMrp)}</span>
+                      <span className="text-lg text-gray-400 line-through font-medium">MRP {formatCurrency(product.mrp)}</span>
                       <span className="bg-[#128842] text-white text-[13px] font-bold px-2 py-0.5 rounded uppercase tracking-wide self-center -translate-y-[2px]">
-                        {Math.round(((activeMrp - activePrice) / activeMrp) * 100)}% OFF
+                        {Math.round(((product.mrp - product.finalPrice) / product.mrp) * 100)}% OFF
                       </span>
                     </>
                   )}
@@ -241,50 +224,47 @@ export function ProductDetailClient({ product, category, brand, specifications, 
               </div>
             </div>
 
-            {/* 3. Variants */}
-            {product.variants && product.variants.length > 0 && vKeys.length > 0 && (
-              <div className="mb-5 space-y-4">
-                {vKeys.map((vk: string) => {
-                  const isColor = vk.toLowerCase().includes('color');
-                  return (
-                    <div key={vk}>
-                      <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">{vk}</h4>
-                      <div className="flex flex-wrap gap-3">
-                        {vOptions(vk).map((opt: string) => {
-                          const isSelected = selectedOptions[vk] === opt;
-                          const optLower = opt.toLowerCase();
-                          const colorMap: Record<string, string> = { "space black": "#1c1c1e", "silver": "#e3e4e6", "black": "#000000", "white": "#ffffff", "blue": "#215E7C", "red": "#A52019", "gold": "#F7E8CC", "purple": "#E8DDF2", "yellow": "#F9E567", "green": "#AEE1CD", "midnight": "#1c1d21", "starlight": "#f8f9f4", "phantom black": "#222222" };
-                          
-                          let optImage = null;
-                          if (isColor) {
-                            const matchingVariant = product.variants.find((v: any) => {
-                              try {
-                                const attrs = typeof v.attributesJSON === 'string' ? JSON.parse(v.attributesJSON) : (v.attributesJSON || {});
-                                return attrs[vk] === opt && v.imageUrl;
-                              } catch(e){return false;}
-                            });
-                            if (matchingVariant) optImage = matchingVariant.imageUrl;
-                          }
-
-                          return (
-                            <button 
-                              key={opt}
-                              onClick={() => handleOptionSelect(vk, opt)}
-                              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg border-2 transition-all ${isSelected ? 'border-amber-400 bg-amber-50 text-amber-800' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'}`}
-                            >
-                              {isColor && optImage && (
-                                <span className="w-6 h-6 rounded overflow-hidden block shrink-0 border border-gray-200 bg-white">
-                                  <img src={optImage} alt={opt} className="w-full h-full object-contain mix-blend-multiply" />
-                                </span>
-                              )}
-                              {opt}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* 3. Family Variants */}
+            {product.familyVariants && product.familyVariants.length > 1 && (
+              <div className="mb-8">
+                <h3 className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-3">Available Variants</h3>
+                <div className="flex flex-wrap gap-3">
+                  {product.familyVariants.map((sibling: any) => {
+                    const isActive = sibling.id === product.id;
+                    const catSlug = sibling.categorySlug || sibling.CategorySlug || sibling.categoryslug || category?.slug || product.categorySlug;
+                    const brnSlug = sibling.brandSlug || sibling.BrandSlug || sibling.brandslug || brand?.slug || product.brandSlug;
+                    const vSlug = sibling.slug || sibling.Slug || sibling.slug;
+                    const vName = sibling.name || sibling.Name;
+                    const vImg = sibling.imageUrl || sibling.ImageUrl || sibling.imageurl;
+                    const vPrice = sibling.finalPrice || sibling.FinalPrice || sibling.finalprice || 0;
+                    
+                    // Simple heuristic to extract options from name if inside parentheses
+                    const parenMatch = vName.match(/\((.*?)\)/);
+                    const shortName = parenMatch ? parenMatch[1] : vName.replace(/^.*?\s?-?\s?/, '').substring(0, 30);
+                    
+                    return (
+                      <Link key={sibling.id || vSlug} href={`/products/${catSlug}/${brnSlug}/${vSlug}`} className={`flex items-center gap-3 p-2 pr-4 rounded-xl border-2 transition-all ${isActive ? 'border-amber-400 bg-amber-50 shadow-[0_2px_10px_rgba(251,191,36,0.2)]' : 'border-gray-200 hover:border-amber-200 hover:bg-gray-50 bg-white'}`}>
+                        {vImg ? (
+                           <span className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-gray-100 overflow-hidden shrink-0">
+                              <img src={vImg.startsWith('/uploads') ? `${API || 'http://localhost:5030'}${vImg}` : vImg} alt={vName} className="w-full h-full object-contain mix-blend-multiply p-0.5" />
+                           </span>
+                        ) : (
+                           <span className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                              <span className="text-[10px] text-gray-400 font-bold">VAR</span>
+                           </span>
+                        )}
+                        <div className="flex flex-col gap-0.5 justify-center">
+                            <span className={`text-xs font-bold leading-tight max-w-[160px] truncate ${isActive ? 'text-amber-900' : 'text-gray-700'}`}>
+                               {shortName}
+                            </span>
+                            <span className={`text-[11px] font-black tracking-tight ${isActive ? 'text-amber-700' : 'text-[#0B192C]'}`}>
+                               {formatCurrency(vPrice)}
+                            </span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
               </div>
             )}
 
@@ -293,7 +273,7 @@ export function ProductDetailClient({ product, category, brand, specifications, 
               <AddToCartWidget 
                 showBorder={false}
                 showBuyNow={true}
-                product={{...product, finalPrice: activePrice, mrp: activeMrp, stock: activeStock, variantId: selectedVariant?.id}} 
+                product={{...product, finalPrice: product.finalPrice, mrp: product.mrp, stock: product.stock, variantId: null}} 
               />
             </div>
 
@@ -476,14 +456,14 @@ export function ProductDetailClient({ product, category, brand, specifications, 
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-3 shadow-[0_-8px_25px_rgba(0,0,0,0.1)] z-50 flex items-center justify-between gap-4">
         <div className="flex flex-col shrink-0">
           <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Total</span>
-          <span className="font-extrabold text-lg text-[#0B192C]">{formatCurrency(activePrice)}</span>
+          <span className="font-extrabold text-lg text-[#0B192C]">{formatCurrency(product.finalPrice)}</span>
         </div>
         <div className="flex-1 flex gap-2">
            <AddToCartWidget 
             compact={true}
             showBorder={false}
             showBuyNow={true}
-            product={{...product, finalPrice: activePrice, mrp: activeMrp, stock: activeStock, variantId: selectedVariant?.id}} 
+            product={{...product, finalPrice: product.finalPrice, mrp: product.mrp, stock: product.stock, variantId: null}} 
           />
         </div>
       </div>

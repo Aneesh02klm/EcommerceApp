@@ -1,0 +1,2 @@
+ALTER TABLE Products ADD COLUMN IF NOT EXISTS FamilyCode VARCHAR(100);
+CREATE INDEX IF NOT EXISTS IX_Products_FamilyCode ON Products(FamilyCode);

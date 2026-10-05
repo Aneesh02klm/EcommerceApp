@@ -106,7 +106,7 @@ using (var scope = app.Services.CreateScope())
             "Database/116_CouponUsageLimit.sql",
             "Database/108_AddVariantIdToCartItems.sql",
             "Database/123_OrderWorkflow.sql",
-            "Database/124_SyncCouponCounts.sql", "Database/130_GranularPromotions.sql", "Database/108_NormalizePromotions.sql", "Database/131_SyncSpecifications.sql"
+            "Database/124_SyncCouponCounts.sql", "Database/130_GranularPromotions.sql", "Database/108_NormalizePromotions.sql", "Database/131_SyncSpecifications.sql", "Database/108_ProductVariantsRefactor.sql", "Database/132_ProductFamilyCode.sql", "Database/133_SeedFamilyCode.sql"
         };
         
         var seedScripts = new[] {
@@ -115,7 +115,7 @@ using (var scope = app.Services.CreateScope())
             "Database/101_DynamicSpecs_Seed.sql", // Applies JSONB specs
             "Database/102_DynamicVariants_Seed.sql",
             "Database/103_MoreVariants_Seed.sql",
-            "Database/104_VariantImages_Seed.sql"
+            "Database/104_VariantImages_Seed.sql", "Database/109_VariantDummyData.sql"
         };
         
         // 1. Run schema and safe alterations
@@ -200,3 +200,5 @@ using (var scope = app.Services.CreateScope()) {
     } catch {}
 }
 app.Run();
+
+

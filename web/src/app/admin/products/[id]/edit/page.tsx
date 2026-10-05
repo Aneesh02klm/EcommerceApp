@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -8,6 +9,8 @@ import { SmartImageUpload } from '@/components/ui/SmartImageUpload';
 import { ArrowLeft, Save, Plus, Package, Image as ImageIcon, Layers, Bot, Sparkles, Trash2 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
+import { VariantProductSelectorModal } from '@/components/admin/VariantProductSelectorModal';
+import { CheckCircle2 } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { formatCurrency } from '@/lib/formatCurrency';
@@ -33,6 +36,7 @@ export default function EditProductPage() {
   
   const [categories, setCategories] = useState<{id: number, name: string, specificationTemplate?: string}[]>([]);
   const [brands, setBrands] = useState<{id: number, name: string}[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   
   const [specDefinitions, setSpecDefinitions] = useState<any[]>([]);
   const [specValues, setSpecValues] = useState<Record<number, string>>({});
@@ -40,7 +44,12 @@ export default function EditProductPage() {
   const [images, setImages] = useState<string[]>(['']);
   const [imageFiles, setImageFiles] = useState<(File|null)[]>([null]);
 
-  const [variants, setVariants] = useState([{ name: '', attributesJSON: '{}', additionalPrice: 0, stock: 0 }]);
+  
+  const [variantSelectorOpen, setVariantSelectorOpen] = useState(false);
+  const [activeVariantIndex, setActiveVariantIndex] = useState<number | null>(null);
+  
+
+  const [variants, setVariants] = useState<{groupName: string, optionName: string, linkedProductId: string}[]>([{ groupName: '', optionName: '', linkedProductId: '' }]);
   const [richMedia, setRichMedia] = useState([{ type: 'Image', mediaUrl: '', title: '', description: '', displayOrder: 0 }]);
   const [richMediaFiles, setRichMediaFiles] = useState<(File|null)[]>([]);
 
@@ -58,6 +67,7 @@ export default function EditProductPage() {
             name: p.name || p.Name || '',
             slug: p.slug || p.Slug || '',
             sku: p.sku || p.SKU || p.Sku || '',
+            familyCode: p.familyCode || p.FamilyCode || '',
             categoryId: p.categoryId || p.CategoryId || 0,
             brandId: p.brandId || p.BrandId || 0,
             mrp: p.mrp || p.MRP || p.Mrp || 0,
@@ -78,11 +88,10 @@ export default function EditProductPage() {
           
           const vList = p.variants || p.Variants; if (vList && vList.length > 0) {
              setVariants(vList.map((v: any) => ({
-                 name: v.name || v.Name,
-                 attributesJSON: typeof (v.attributesJSON || v.AttributesJSON) === 'string' ? (v.attributesJSON || v.AttributesJSON) : JSON.stringify((v.attributesJSON || v.AttributesJSON) || {}),
-                 additionalPrice: v.additionalPrice || v.AdditionalPrice || 0,
-                 stock: v.stock || v.Stock || 0
-             })));
+                   groupName: v.groupName || v.GroupName || '',
+                   optionName: v.optionName || v.OptionName || '',
+                   linkedProductId: v.linkedProductId || v.LinkedProductId || ''
+               })));
           }
           
           // Wait for categories to load spec definitions, then apply specs
@@ -91,6 +100,9 @@ export default function EditProductPage() {
             try {
               setFetchedSpecJson(typeof specJ === 'string' ? JSON.parse(specJ) : specJ);
             } catch(e) {}
+          }
+          if (p.familyVariants || p.FamilyVariants) {
+              setFamilyVariants(p.familyVariants || p.FamilyVariants || []);
           }
         }
       } catch(err) {
@@ -119,10 +131,12 @@ export default function EditProductPage() {
     }
   }, [specDefinitions, fetchedSpecJson]);
 
+  const [familyVariants, setFamilyVariants] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     sku: '',
+      familyCode: '',
     categoryId: 0,
     brandId: 0,
     mrp: 0,
@@ -136,6 +150,40 @@ export default function EditProductPage() {
     isBestSeller: false
   });
 
+  // Smart Options Derivation
+  const availableGroups = React.useMemo(() => {
+      const groups = new Set<string>();
+      specDefinitions.forEach(def => groups.add(def.name));
+      allProducts.forEach(p => {
+          if (p.categoryId === Number(formData.categoryId)) {
+              const specs = typeof p.specificationJson === 'string' ? JSON.parse(p.specificationJson) : (p.specificationJson || {});
+              for (const g in specs) {
+                  for (const k in specs[g]) {
+                      groups.add(k);
+                  }
+              }
+          }
+      });
+      return Array.from(groups);
+  }, [specDefinitions, allProducts, formData.categoryId]);
+
+  const getAvailableOptions = React.useCallback((groupName: string) => {
+      if (!groupName) return [];
+      const opts = new Set<string>();
+      allProducts.forEach(p => {
+          if (p.categoryId === Number(formData.categoryId) && p.brandId === Number(formData.brandId)) {
+              const specs = typeof p.specificationJson === 'string' ? JSON.parse(p.specificationJson) : (p.specificationJson || {});
+              for (const g in specs) {
+                  if (specs[g][groupName]) {
+                      opts.add(specs[g][groupName]);
+                  }
+              }
+          }
+      });
+      return Array.from(opts);
+  }, [allProducts, formData.categoryId, formData.brandId]);
+
+
   useEffect(() => {
     const fetchCoreData = async () => {
       try {
@@ -144,6 +192,14 @@ export default function EditProductPage() {
         if (catJson.success) setCategories(catJson.data);
 
         // Fetch brands if endpoint exists, otherwise mock
+        const prodRes = await fetch(`${API}/api/v1/products?pageSize=1000`).catch(() => null);
+        if (prodRes && prodRes.ok) {
+          const prodJson = await prodRes.json();
+          if (prodJson.success) {
+            setAllProducts(prodJson.data.items || prodJson.data || []);
+          }
+        }
+        
         const brandRes = await fetch(`${API}/api/v1/brands`).catch(() => null);
         if (brandRes && brandRes.ok) {
           const brandJson = await brandRes.json();
@@ -248,7 +304,7 @@ export default function EditProductPage() {
         displayOrder: idx
       }));
 
-    const formattedVariants = variants.filter(v => v.name.trim() !== '');
+    const formattedVariants = variants.filter(v => v.groupName.trim() !== '' && v.optionName.trim() !== '');
     const formattedRichMedia = richMedia.filter(r => r.mediaUrl.trim() !== '');
 
     const payload = {
@@ -257,7 +313,7 @@ export default function EditProductPage() {
       specificationJson: JSON.stringify(groupedSpecs),
       
       images: formattedImages,
-      variants: formattedVariants,
+      
       richMedia: formattedRichMedia
     };
 
@@ -387,7 +443,7 @@ export default function EditProductPage() {
                 <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Product Name</label>
                 <input type="text" required value={formData.name} onChange={handleNameChange} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Slug</label>
                   <input type="text" required value={formData.slug} onChange={(e) => setFormData({...formData, slug: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded bg-gray-50 outline-none text-sm font-semibold text-gray-600" />
@@ -396,53 +452,26 @@ export default function EditProductPage() {
                   <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">SKU</label>
                   <input type="text" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
                 </div>
+                <div>
+                  <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Family Code</label>
+                  <input type="text" value={formData.familyCode} onChange={(e) => setFormData({...formData, familyCode: e.target.value})} placeholder="e.g. GALAXY-S23" className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
+                </div>
               </div>
               <div>
                 <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
-                <RichTextEditor value={formData.description} onChange={(val) => { if (val !== formData.description) setFormData({...formData, description: val}); }} />
+                <RichTextEditor value={formData.description} onChange={(val) => setFormData(prev => val !== prev.description ? { ...prev, description: val } : prev)} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Features (HTML allowed)</label>
-                  <RichTextEditor value={formData.features || ""} onChange={(val) => { if (val !== formData.features) setFormData({...formData, features: val}); }} />
+                  <RichTextEditor value={formData.features || ""} onChange={(val) => setFormData(prev => val !== prev.features ? { ...prev, features: val } : prev)} />
                 </div>
                 
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-200">
-            <CardHeader className="bg-gray-50 border-b border-gray-200 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-bold text-[#0B192C]">Images</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={() => { setImages([...images, '']); setImageFiles([...imageFiles, null]); }} className="h-8 px-2 text-xs font-bold">
-                <Plus size={14} className="mr-1" /> Add Image
-              </Button>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {images.map((img, i) => (
-                  <div key={i} className="relative">
-                    <SmartImageUpload 
-                       initialUrl={img} 
-                       onFileSelect={(f) => { 
-                          const newF = [...imageFiles]; newF[i] = f; setImageFiles(newF); 
-                          if (!f) { const nI = [...images]; nI[i] = ''; setImages(nI); }
-                       }} 
-                       aspectRatio={1} 
-                       label={i === 0 ? "Primary Image" : "Gallery Image"} 
-                    />
-                    {i > 0 && (
-                        <button type="button" onClick={() => {
-                            const newI = images.filter((_, idx) => idx !== i);
-                            const newF = imageFiles.filter((_, idx) => idx !== i);
-                            setImages(newI); setImageFiles(newF);
-                        }} className="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow text-red-500 hover:text-red-700 z-10"><Trash2 size={14}/></button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          
           
           {/* Dynamic Specifications */}
           {formData.categoryId > 0 && (
@@ -521,34 +550,7 @@ export default function EditProductPage() {
           )}
 
 
-          {/* Variants */}
-          <Card className="shadow-sm border-gray-200">
-            <CardHeader className="bg-gray-50 border-b border-gray-200 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-bold text-[#0B192C] flex items-center">
-                <Layers size={18} className="mr-2 text-amber-500" /> 
-                Product Variants
-              </CardTitle>
-              <button type="button" onClick={() => setVariants([...variants, { name: '', attributesJSON: '{}', additionalPrice: 0, stock: 0 }])} className="text-xs font-bold text-amber-600 uppercase tracking-widest flex items-center"><Plus size={14} className="mr-1"/> Add Variant</button>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              {variants.map((v, i) => (
-                <div key={i} className="flex gap-4 items-end border-b border-gray-100 pb-4">
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Variant Name (e.g., Graphite / 256GB)</label>
-                    <input type="text" value={v.name} onChange={e => { const nv = [...variants]; nv[i].name = e.target.value; setVariants(nv); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">+ Price</label>
-                    <input type="number" step="0.01" value={v.additionalPrice} onChange={e => { const nv = [...variants]; nv[i].additionalPrice = parseFloat(e.target.value); setVariants(nv); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Stock</label>
-                    <input type="number" value={v.stock} onChange={e => { const nv = [...variants]; nv[i].stock = parseInt(e.target.value); setVariants(nv); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          
 
           {/* Rich Media (A+ Content) */}
           <Card className="shadow-sm border-gray-200">

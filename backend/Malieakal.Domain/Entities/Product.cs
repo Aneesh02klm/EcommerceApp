@@ -13,7 +13,8 @@ namespace Malieakal.Domain.Entities
         public string Slug { get; set; } = string.Empty;
         public string? CategorySlug { get; set; }
         public string? BrandSlug { get; set; }
-        public string? SKU { get; set; }
+        public string? SKU { get; set; } 
+        public string? FamilyCode { get; set; }
         public string? Model { get; set; }
         public decimal MRP { get; set; }
         public decimal Discount { get; set; }
@@ -40,6 +41,7 @@ namespace Malieakal.Domain.Entities
         public List<ProductImage> Images { get; set; } = new List<ProductImage>();
         public List<ProductSpecification> Specifications { get; set; } = new List<ProductSpecification>();
         public List<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
+        public List<dynamic>? FamilyVariants { get; set; }
         public List<ProductRichMedia> RichMedia { get; set; } = new List<ProductRichMedia>();
     }
 }

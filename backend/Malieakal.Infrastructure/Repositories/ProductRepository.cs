@@ -33,7 +33,7 @@ namespace Malieakal.Infrastructure.Repositories
                     WHERE p.Id = @Id;
                 SELECT * FROM ProductImages WHERE ProductId = @Id ORDER BY DisplayOrder;
                 SELECT * FROM ProductSpecifications WHERE ProductId = @Id;
-                SELECT * FROM ProductVariants WHERE ProductId = @Id;
+                SELECT pv.*, p2.Slug as LinkedProductSlug, (SELECT ImageUrl FROM ProductImages WHERE ProductId = p2.Id ORDER BY DisplayOrder LIMIT 1) as LinkedProductImageUrl FROM ProductVariants pv LEFT JOIN Products p2 ON pv.LinkedProductId = p2.Id WHERE pv.ProductId = @Id;
                 SELECT * FROM ProductRichMedia WHERE ProductId = @Id ORDER BY DisplayOrder;
             ";
             
@@ -48,6 +48,13 @@ namespace Malieakal.Infrastructure.Repositories
                 product.RichMedia = (await multi.ReadAsync<ProductRichMedia>()).ToList();
             }
 
+            if (product != null && !string.IsNullOrEmpty(product.FamilyCode)) {
+                var siblings = await connection.QueryAsync<dynamic>(
+                    "SELECT p.Id, p.Name, p.Slug, p.SKU, p.FinalPrice, p.MRP, (SELECT ImageUrl FROM ProductImages WHERE ProductId = p.Id ORDER BY DisplayOrder LIMIT 1) as ImageUrl, c.Slug as CategorySlug, b.Slug as BrandSlug, p.SpecificationJson FROM Products p LEFT JOIN Categories c ON p.CategoryId = c.Id LEFT JOIN Brands b ON p.BrandId = b.Id WHERE p.FamilyCode = @FamilyCode AND p.IsActive = true",
+                    new { FamilyCode = product.FamilyCode }
+                );
+                product.FamilyVariants = siblings.ToList();
+            }
             return product;
         }
 
@@ -73,8 +80,8 @@ namespace Malieakal.Infrastructure.Repositories
             try
             {
                 var sql = @"
-                    INSERT INTO Products (Id, CategoryId, SubcategoryId, BrandId, Name, Slug, SKU, Model, MRP, Discount, DiscountType, FinalPrice, Stock, Description, Features, Highlights, IsActive, IsBestSeller, CreatedAt, UpdatedAt, SpecificationJson)
-                    VALUES (@Id, @CategoryId, @SubcategoryId, @BrandId, @Name, @Slug, @SKU, @Model, @MRP, @Discount, @DiscountType, @FinalPrice, @Stock, @Description, @Features, @Highlights, @IsActive, @IsBestSeller, @CreatedAt, @UpdatedAt, @SpecificationJson::jsonb);";
+                    INSERT INTO Products (Id, CategoryId, SubcategoryId, BrandId, Name, Slug, SKU, FamilyCode, Model, MRP, Discount, DiscountType, FinalPrice, Stock, Description, Features, Highlights, IsActive, IsBestSeller, CreatedAt, UpdatedAt, SpecificationJson)
+                    VALUES (@Id, @CategoryId, @SubcategoryId, @BrandId, @Name, @Slug, @SKU, @FamilyCode, @Model, @MRP, @Discount, @DiscountType, @FinalPrice, @Stock, @Description, @Features, @Highlights, @IsActive, @IsBestSeller, @CreatedAt, @UpdatedAt, @SpecificationJson::jsonb);";
                 await connection.ExecuteAsync(sql, product, transaction);
 
                 if (product.Images != null && product.Images.Any())
@@ -90,7 +97,16 @@ namespace Malieakal.Infrastructure.Repositories
                     foreach(var spec in product.Specifications) { spec.ProductId = product.Id; }
                     await connection.ExecuteAsync(specSql, product.Specifications, transaction);
                 }
-                
+
+                // Update Variants
+                await connection.ExecuteAsync("DELETE FROM ProductVariants WHERE ProductId = @Id", new { Id = product.Id }, transaction);
+                if (product.Variants != null && product.Variants.Any())
+                {
+                    var varSql = "INSERT INTO ProductVariants (ProductId, GroupName, OptionName, LinkedProductId) VALUES (@ProductId, @GroupName, @OptionName, @LinkedProductId);";
+                    foreach(var variant in product.Variants) { variant.ProductId = product.Id; }
+                    await connection.ExecuteAsync(varSql, product.Variants, transaction);
+                }
+
                 transaction.Commit();
             }
             catch
@@ -140,6 +156,15 @@ namespace Malieakal.Infrastructure.Repositories
                     var specSql = @"INSERT INTO ProductSpecifications (ProductId, SpecificationDefinitionId, Value) VALUES (@ProductId, @SpecificationDefinitionId, @Value);";
                     foreach(var spec in product.Specifications) { spec.ProductId = product.Id; }
                     await connection.ExecuteAsync(specSql, product.Specifications, transaction);
+                }
+
+                // Update Variants
+                await connection.ExecuteAsync("DELETE FROM ProductVariants WHERE ProductId = @Id", new { Id = product.Id }, transaction);
+                if (product.Variants != null && product.Variants.Any())
+                {
+                    var varSql = "INSERT INTO ProductVariants (ProductId, GroupName, OptionName, LinkedProductId) VALUES (@ProductId, @GroupName, @OptionName, @LinkedProductId);";
+                    foreach(var variant in product.Variants) { variant.ProductId = product.Id; }
+                    await connection.ExecuteAsync(varSql, product.Variants, transaction);
                 }
 
                 transaction.Commit();
@@ -339,3 +364,4 @@ namespace Malieakal.Infrastructure.Repositories
         }
     }
 }
+
