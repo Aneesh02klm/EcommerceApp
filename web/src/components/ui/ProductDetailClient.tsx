@@ -412,7 +412,7 @@ export function ProductDetailClient({ product, category, brand, specifications, 
                           <div key={group}>
                             <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 bg-gray-50 px-4 py-2.5 rounded-lg">{group}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-12 px-4">
-                              {Object.entries(fields || {}).map(([k, v]: any) => (
+                              {Object.entries(fields || {}).filter(([_, v]: any) => v !== null && v !== undefined && v !== '').map(([k, v]: any) => (
                                 <div key={k} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-6 border-b border-gray-100 pb-4">
                                   <span className="text-sm text-gray-400 font-semibold min-w-[200px]">{k}</span>
                                   <span className="text-sm font-bold text-[#0B192C]">{v}</span>

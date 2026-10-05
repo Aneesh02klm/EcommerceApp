@@ -242,7 +242,7 @@ export default function LogisticsAdminPage() {
           </div>
           <div className="flex-1">
             <label className="block text-xs font-bold text-gray-500 mb-1">Flat Charge (₹)</label>
-            <input type="number" className="w-full border rounded p-2 text-sm" placeholder="100"
+            <input type="number" step="0.01" className="w-full border rounded p-2 text-sm" placeholder="100"
               value={newState.flatCharge} onChange={e => setNewState({...newState, flatCharge: e.target.value})} />
           </div>
           <div className="w-32 flex items-center mb-2">

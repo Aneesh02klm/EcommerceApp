@@ -106,7 +106,7 @@ using (var scope = app.Services.CreateScope())
             "Database/116_CouponUsageLimit.sql",
             "Database/108_AddVariantIdToCartItems.sql",
             "Database/123_OrderWorkflow.sql",
-            "Database/124_SyncCouponCounts.sql", "Database/130_GranularPromotions.sql", "Database/108_NormalizePromotions.sql"
+            "Database/124_SyncCouponCounts.sql", "Database/130_GranularPromotions.sql", "Database/108_NormalizePromotions.sql", "Database/131_SyncSpecifications.sql"
         };
         
         var seedScripts = new[] {

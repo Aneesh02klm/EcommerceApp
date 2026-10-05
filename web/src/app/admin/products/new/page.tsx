@@ -448,7 +448,7 @@ export default function CreateProductPage() {
                   </div>
                   <div className="w-24">
                     <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">+ Price</label>
-                    <input type="number" value={v.additionalPrice} onChange={e => { const nv = [...variants]; nv[i].additionalPrice = parseFloat(e.target.value); setVariants(nv); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
+                    <input type="number" step="0.01" value={v.additionalPrice} onChange={e => { const nv = [...variants]; nv[i].additionalPrice = parseFloat(e.target.value); setVariants(nv); }} className="w-full p-2.5 border border-gray-300 rounded text-sm" />
                   </div>
                   <div className="w-24">
                     <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Stock</label>
@@ -553,7 +553,7 @@ export default function CreateProductPage() {
             <CardContent className="p-6 space-y-5">
               <div>
                 <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">MRP (INR)</label>
-                <input type="number" required min={0} value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: parseFloat(e.target.value) || 0})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold text-[#0B192C]" />
+                <input type="number" step="0.01" required min={0} value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: parseFloat(e.target.value) || 0})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold text-[#0B192C]" />
               </div>
               <div className="flex gap-2">
                   <div className="flex-1">

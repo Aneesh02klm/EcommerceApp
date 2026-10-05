@@ -436,7 +436,7 @@ export default function SpecificProductsSelector({ value, onChange, templateFile
                                                         <Tag size={12} className={`absolute left-2 top-1/2 -translate-y-1/2 ${isInvalid && !v.error?.includes('SKU') ? 'text-red-400' : 'text-gray-400'}`} />
                                                     )}
                                                     <input 
-                                                        type="number" 
+                                                        type="number" step="0.01" 
                                                         min="0"
                                                         value={v.discount} 
                                                         onChange={e => {
