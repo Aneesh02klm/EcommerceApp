@@ -9,6 +9,7 @@ import { ArrowLeft, Save, Plus, Package, Image as ImageIcon, Layers, Bot, Sparkl
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
 import { Loader2 } from 'lucide-react';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
@@ -127,6 +128,20 @@ export default function CreateProductPage() {
 
   const finalPrice = Math.max(0, formData.discountType === 'Percentage' ? formData.mrp - (formData.mrp * (formData.discount / 100)) : formData.mrp - formData.discount);
 
+  
+  const isKeyFeature = (keyName: string) => {
+    return Boolean(formData.highlights && formData.highlights.split('|').includes(keyName));
+  };
+
+  const toggleKeyFeature = (keyName: string) => {
+    const current = formData.highlights ? formData.highlights.split('|') : [];
+    if (current.includes(keyName)) {
+        setFormData({...formData, highlights: current.filter(k => k !== keyName).join('|')});
+    } else {
+        setFormData({...formData, highlights: [...current, keyName].join('|')});
+    }
+  };
+    
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
@@ -305,17 +320,14 @@ export default function CreateProductPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
-                <textarea rows={4} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
+                <RichTextEditor value={formData.description} onChange={(val) => { if (val !== formData.description) setFormData({...formData, description: val}); }} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Features (HTML allowed)</label>
-                  <textarea rows={3} value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded outline-none text-sm font-semibold" />
+                  <RichTextEditor value={formData.features || ""} onChange={(val) => { if (val !== formData.features) setFormData({...formData, features: val}); }} />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Highlights (Bullet points)</label>
-                  <textarea rows={3} value={formData.highlights} onChange={(e) => setFormData({...formData, highlights: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded outline-none text-sm font-semibold" />
-                </div>
+                
               </div>
             </CardContent>
           </Card>
@@ -380,8 +392,8 @@ export default function CreateProductPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                           {specsForGroup.map((spec: any) => (
                             <div key={spec.id}>
-                              <label className="flex justify-between text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">
-                                <span>{spec.name} {spec.isRequired && <span className="text-red-500">*</span>}</span>
+                              <label className="flex items-center justify-between text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">
+                                <span>{spec.name} {spec.isRequired && <span className="text-red-500">*</span>}</span> <label className="flex items-center gap-1.5 cursor-pointer text-[#0B192C] hover:text-amber-600 transition-colors bg-white rounded shadow-sm border border-gray-100 px-2 py-0.5 ml-auto"><input type="checkbox" className="w-3 h-3 accent-amber-500 cursor-pointer" checked={isKeyFeature(spec.name)} onChange={() => toggleKeyFeature(spec.name)} /><span className="text-[9px] font-extrabold uppercase mt-0.5">Key Feature</span></label>
                                 {spec.unit && <span className="text-amber-600 bg-amber-50 px-1 rounded">{spec.unit}</span>}
                               </label>
                               

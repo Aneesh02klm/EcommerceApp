@@ -9,6 +9,7 @@ import { ArrowLeft, Save, Plus, Package, Image as ImageIcon, Layers, Bot, Sparkl
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/components/ui/Toast';
 import { Loader2 } from 'lucide-react';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
@@ -35,6 +36,7 @@ export default function EditProductPage() {
   
   const [specDefinitions, setSpecDefinitions] = useState<any[]>([]);
   const [specValues, setSpecValues] = useState<Record<number, string>>({});
+  const [fetchedSpecJson, setFetchedSpecJson] = useState<any>(null);
   const [images, setImages] = useState<string[]>(['']);
   const [imageFiles, setImageFiles] = useState<(File|null)[]>([null]);
 
@@ -53,55 +55,43 @@ export default function EditProductPage() {
         if (json.success && json.data) {
           const p = json.data;
           setFormData({
-            name: p.name,
-            slug: p.slug,
-            sku: p.sku || '',
-            categoryId: p.categoryId,
-            brandId: p.brandId,
-            mrp: p.mrp,
-            discount: p.discount || 0,
-      discountType: p.discountType || 'Flat',
-            stock: p.stock,
-            description: p.description || '',
-            features: p.features || '',
-            highlights: p.highlights || '',
-            isActive: p.isActive,
+            name: p.name || p.Name || '',
+            slug: p.slug || p.Slug || '',
+            sku: p.sku || p.SKU || p.Sku || '',
+            categoryId: p.categoryId || p.CategoryId || 0,
+            brandId: p.brandId || p.BrandId || 0,
+            mrp: p.mrp || p.MRP || p.Mrp || 0,
+            discount: p.discount || p.Discount || 0,
+            discountType: p.discountType || p.DiscountType || 'Flat',
+            stock: p.stock || p.Stock || 0,
+            description: p.description || p.Description || '',
+            features: p.features || p.Features || '',
+            highlights: p.highlights || p.Highlights || '',
+            isActive: p.isActive !== undefined ? p.isActive : (p.IsActive !== undefined ? p.IsActive : true),
             isBestSeller: p.isBestSeller || p.IsBestSeller || false
           });
           
           if (p.images && p.images.length > 0) {
-            setImages(p.images.map((i: any) => i.imageUrl));
-            setImageFiles(p.images.map(() => null));
+            setImages((p.images || p.Images || []).map((i: any) => i.imageUrl || i.ImageUrl));
+            setImageFiles((p.images || p.Images || []).map(() => null));
           }
           
-          if (p.variants && p.variants.length > 0) {
-             setVariants(p.variants.map((v: any) => ({
-                 name: v.name,
-                 attributesJSON: typeof v.attributesJSON === 'string' ? v.attributesJSON : JSON.stringify(v.attributesJSON || {}),
-                 additionalPrice: v.additionalPrice,
-                 stock: v.stock
+          const vList = p.variants || p.Variants; if (vList && vList.length > 0) {
+             setVariants(vList.map((v: any) => ({
+                 name: v.name || v.Name,
+                 attributesJSON: typeof (v.attributesJSON || v.AttributesJSON) === 'string' ? (v.attributesJSON || v.AttributesJSON) : JSON.stringify((v.attributesJSON || v.AttributesJSON) || {}),
+                 additionalPrice: v.additionalPrice || v.AdditionalPrice || 0,
+                 stock: v.stock || v.Stock || 0
              })));
           }
           
           // Wait for categories to load spec definitions, then apply specs
-          setTimeout(() => {
-              if (p.specificationJson) {
-                try {
-                  const specObj = typeof p.specificationJson === 'string' ? JSON.parse(p.specificationJson) : p.specificationJson;
-                  const newSpecs: any = {};
-                  // The definitions are flat in specDefinitions. We need to map group/name back to def.id
-                  setSpecDefinitions(defs => {
-                      defs.forEach(def => {
-                          if (specObj[def.groupName] && specObj[def.groupName][def.name]) {
-                              newSpecs[def.id] = specObj[def.groupName][def.name];
-                          }
-                      });
-                      setSpecValues(newSpecs);
-                      return defs;
-                  });
-                } catch(e) {}
-              }
-          }, 500);
+          const specJ = p.specificationJson || p.SpecificationJson;
+          if (specJ) {
+            try {
+              setFetchedSpecJson(typeof specJ === 'string' ? JSON.parse(specJ) : specJ);
+            } catch(e) {}
+          }
         }
       } catch(err) {
         toast.error('Failed to load product');
@@ -111,6 +101,23 @@ export default function EditProductPage() {
     };
     fetchProduct();
   }, [productId]);
+
+  
+  useEffect(() => {
+    if (specDefinitions.length > 0 && fetchedSpecJson) {
+      const newSpecs: any = {};
+      let hasData = false;
+      specDefinitions.forEach(def => {
+          if (fetchedSpecJson[def.groupName] && fetchedSpecJson[def.groupName][def.name]) {
+              newSpecs[def.id] = fetchedSpecJson[def.groupName][def.name];
+              hasData = true;
+          }
+      });
+      if (hasData) {
+        setSpecValues(prev => ({ ...prev, ...newSpecs }));
+      }
+    }
+  }, [specDefinitions, fetchedSpecJson]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -200,6 +207,20 @@ export default function EditProductPage() {
 
   const finalPrice = Math.max(0, formData.discountType === 'Percentage' ? formData.mrp - (formData.mrp * (formData.discount / 100)) : formData.mrp - formData.discount);
 
+  
+  const isKeyFeature = (keyName: string) => {
+    return Boolean(formData.highlights && formData.highlights.split('|').includes(keyName));
+  };
+
+  const toggleKeyFeature = (keyName: string) => {
+    const current = formData.highlights ? formData.highlights.split('|') : [];
+    if (current.includes(keyName)) {
+        setFormData({...formData, highlights: current.filter(k => k !== keyName).join('|')});
+    } else {
+        setFormData({...formData, highlights: [...current, keyName].join('|')});
+    }
+  };
+    
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
@@ -378,17 +399,14 @@ export default function EditProductPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
-                <textarea rows={4} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-amber-500 outline-none text-sm font-semibold" />
+                <RichTextEditor value={formData.description} onChange={(val) => { if (val !== formData.description) setFormData({...formData, description: val}); }} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Features (HTML allowed)</label>
-                  <textarea rows={3} value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded outline-none text-sm font-semibold" />
+                  <RichTextEditor value={formData.features || ""} onChange={(val) => { if (val !== formData.features) setFormData({...formData, features: val}); }} />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">Highlights (Bullet points)</label>
-                  <textarea rows={3} value={formData.highlights} onChange={(e) => setFormData({...formData, highlights: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded outline-none text-sm font-semibold" />
-                </div>
+                
               </div>
             </CardContent>
           </Card>
@@ -453,8 +471,8 @@ export default function EditProductPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                           {specsForGroup.map((spec: any) => (
                             <div key={spec.id}>
-                              <label className="flex justify-between text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">
-                                <span>{spec.name} {spec.isRequired && <span className="text-red-500">*</span>}</span>
+                              <label className="flex items-center justify-between text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1.5">
+                                <span>{spec.name} {spec.isRequired && <span className="text-red-500">*</span>}</span> <label className="flex items-center gap-1.5 cursor-pointer text-[#0B192C] hover:text-amber-600 transition-colors bg-white rounded shadow-sm border border-gray-100 px-2 py-0.5 ml-auto"><input type="checkbox" className="w-3 h-3 accent-amber-500 cursor-pointer" checked={isKeyFeature(spec.name)} onChange={() => toggleKeyFeature(spec.name)} /><span className="text-[9px] font-extrabold uppercase mt-0.5">Key Feature</span></label>
                                 {spec.unit && <span className="text-amber-600 bg-amber-50 px-1 rounded">{spec.unit}</span>}
                               </label>
                               

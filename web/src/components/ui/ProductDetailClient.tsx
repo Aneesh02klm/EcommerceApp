@@ -337,23 +337,42 @@ export function ProductDetailClient({ product, category, brand, specifications, 
             <div className="border-t border-gray-100 pt-8">
               {(() => {
                 let h: string[] = [];
-                try {
-                  const specJson = typeof product.specificationJson === 'string' ? JSON.parse(product.specificationJson) : (product.specificationJson || {});
-                  const hKeys = typeof category?.highlightKeys === 'string' ? JSON.parse(category.highlightKeys) : (category?.highlightKeys || []);
-                  if (Array.isArray(hKeys) && hKeys.length > 0) {
-                    for (const group of Object.values(specJson)) {
-                      for (const [key, val] of Object.entries(group as any || {})) {
-                        if (hKeys.includes(key)) {
-                          h.push(`${key}: ${val}`);
+                    try {
+                      const specJson = typeof product.specificationJson === 'string' ? JSON.parse(product.specificationJson) : (product.specificationJson || {});
+                      
+                      if (product.highlights) {
+                        const selectedKeys = product.highlights.split('|').map((s: string) => s.trim()).filter(Boolean);
+                        const foundKeys = new Set<string>();
+                        
+                        for (const group of Object.values(specJson)) {
+                          for (const [key, val] of Object.entries(group as any || {})) {
+                            if (selectedKeys.includes(key) && val) {
+                              h.push(`${key}: ${val}`);
+                              foundKeys.add(key);
+                            }
+                          }
+                        }
+                        
+                        // Append any remaining items (legacy custom text support)
+                        for (const key of selectedKeys) {
+                          if (!foundKeys.has(key)) {
+                            h.push(key);
+                          }
+                        }
+                      } else {
+                        // Fallback to Category defaults
+                        const hKeys = typeof category?.highlightKeys === 'string' ? JSON.parse(category.highlightKeys) : (category?.highlightKeys || []);
+                        if (Array.isArray(hKeys) && hKeys.length > 0) {
+                          for (const group of Object.values(specJson)) {
+                            for (const [key, val] of Object.entries(group as any || {})) {
+                              if (hKeys.includes(key) && val) {
+                                h.push(`${key}: ${val}`);
+                              }
+                            }
+                          }
                         }
                       }
-                    }
-                  }
-                } catch(e) {}
-                
-                if (h.length === 0 && product.highlights) {
-                  h = product.highlights.split('|').map((s: string) => s.trim());
-                }
+                    } catch(e) {}
 
                 if (h.length === 0) return null;
 
@@ -392,7 +411,7 @@ export function ProductDetailClient({ product, category, brand, specifications, 
           <div className="py-8">
             {activeTab === 'description' && (
               <div className="prose max-w-none text-gray-600 font-medium leading-loose">
-                <p>{product.description}</p>
+                <div className="prose prose-sm max-w-none text-gray-600 font-medium leading-loose" dangerouslySetInnerHTML={{ __html: product.description }} />
                 {product.features && (
                   <div className="mt-10">
                     <h3 className="text-xl font-black text-[#0B192C] mb-6">Detailed Overview</h3>

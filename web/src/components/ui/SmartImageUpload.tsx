@@ -15,6 +15,8 @@ interface SmartImageUploadProps {
 
 export function SmartImageUpload({ initialUrl, onFileSelect, aspectRatio = 1, label = "Upload Image" }: SmartImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(initialUrl || null);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5030';
+  const getDisplayUrl = (url: string | null) => url?.startsWith('/uploads') ? `${API_URL}${url}` : url;
   const [rawFile, setRawFile] = useState<File | null>(null);
   
   // Cropping states
@@ -137,7 +139,7 @@ export function SmartImageUpload({ initialUrl, onFileSelect, aspectRatio = 1, la
       ) : (
         <div className="relative border border-gray-200 rounded-lg overflow-hidden group bg-gray-50 h-32 flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview} alt="Preview" className="max-h-full max-w-full object-contain" />
+          <img src={getDisplayUrl(preview) || ""} alt="Preview" className="max-h-full max-w-full object-contain" />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
              <button type="button" onClick={() => document.getElementById('reupload-' + label)?.click()} className="p-2 bg-white rounded-full text-gray-700 hover:text-amber-600"><CropIcon size={14}/></button>
              <button type="button" onClick={removeImage} className="p-2 bg-white rounded-full text-red-600 hover:bg-red-50"><X size={14}/></button>
